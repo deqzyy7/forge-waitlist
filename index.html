@@ -231,7 +231,7 @@ body.no-gl .glass {
 }
 .feature-desc {
   font-size: 14px;
-  color: var(--ink-3);
+  color: rgba(255, 255, 255, 0.60);
   line-height: 1.45;
   text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
 }
@@ -244,7 +244,8 @@ body.no-gl .glass {
   font-size: 12px;
   font-weight: 600;
   margin-bottom: 18px;
-  color: var(--ink-3);
+  color: rgba(255, 255, 255, 0.62);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
   text-transform: uppercase;
   letter-spacing: 0.09em;
 }
@@ -257,7 +258,7 @@ body.no-gl .glass {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(0, 0, 0, 0.32);
+  background: rgba(6, 8, 26, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   font-size: 15px;
@@ -271,7 +272,7 @@ body.no-gl .glass {
 .form-input::placeholder { color: rgba(255, 255, 255, 0.34); }
 .form-input:focus {
   outline: none;
-  background: rgba(0, 0, 0, 0.44);
+  background: rgba(6, 8, 26, 0.68);
   border-color: rgba(255, 255, 255, 0.34);
   box-shadow: 0 0 0 4px rgba(61, 139, 255, 0.14);
 }
@@ -310,7 +311,12 @@ body.no-gl .submit-btn {
 }
 .submit-btn:disabled { opacity: 0.6; cursor: progress; }
 
-.form-note { font-size: 13px; color: var(--ink-3); margin-top: 14px; }
+.form-note {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.58);
+  margin-top: 14px;
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+}
 .form-note.err { color: #ff8a9c; }
 
 .success-message {
@@ -486,44 +492,61 @@ float fbm(vec2 p) {
 }
 
 /* ------------------------------------------------------------------ fond */
-/* Déformation de domaine : on bruite les coordonnées avant de les bruiter à
-   nouveau, ce qui transforme un nuage informe en écoulement — les filaments
-   s'étirent et se replient. Palette froide et contrastée : bleu électrique et
-   cyan sur du noir, avec une seule braise cuivrée pour éviter le monochrome.
-   Le magenta a été retiré : au-delà d'une certaine dose, la page cesse de se
-   lire comme un outil. */
+/* De grandes nappes lisses qui se replient, éclairées sur leur arête — pas de
+   la fumée. La différence tient à la FRÉQUENCE : deux octaves très basses au
+   lieu de quatre, donc des formes larges qu'on lit d'un coup d'oeil, au lieu
+   de filaments qui grouillent.
+
+   Ce qui fait le rendu « soie », c'est l'éclairage : on traite le champ de
+   bruit comme une surface, on calcule sa pente, et on allume les arêtes selon
+   une direction de lumière fixe. Sans ce terme, on n'obtient qu'un dégradé
+   mou ; avec lui, la nappe a un dessus et un dessous. */
+
+float hauteur(vec2 p, float t) {
+  // Deux couches qui dérivent en sens inverse : leur interférence crée le
+  // repli, et comme leurs vitesses sont incommensurables il ne se répète pas.
+  return 0.62 * noise(p * 0.85 + vec2(t * 0.11, t * 0.07))
+       + 0.30 * noise(p * 1.70 + vec2(-t * 0.09, t * 0.13) + 3.1);
+}
 
 vec3 background(vec2 uv) {
-  float t = uTime * 0.035;
+  float t = uTime * 0.9;
 
-  vec2 p = uv * 1.6;
+  vec2 p = uv * 2.6;
   p.x *= uRes.x / uRes.y;
 
-  vec2 q = vec2(fbm(p + t), fbm(p + vec2(5.2, 1.3) - t * 0.7));
-  vec2 r = vec2(fbm(p + 3.2 * q + vec2(1.7, 9.2) + t * 1.3),
-                fbm(p + 3.2 * q + vec2(8.3, 2.8) + t * 1.0));
-  float f = fbm(p + 3.0 * r);
+  float h = hauteur(p, t);
 
-  vec3 nuit   = vec3(0.008, 0.012, 0.030);
-  vec3 bleu   = vec3(0.035, 0.180, 0.720);
-  vec3 cyan   = vec3(0.055, 0.520, 0.640);
-  vec3 cuivre = vec3(0.900, 0.400, 0.120);
+  // Pente du champ, par différences finies : c'est la normale de la nappe.
+  float d = 0.012;
+  vec2 grad = vec2(hauteur(p + vec2(d, 0.0), t) - hauteur(p - vec2(d, 0.0), t),
+                   hauteur(p + vec2(0.0, d), t) - hauteur(p - vec2(0.0, d), t)) / (2.0 * d);
 
-  vec3 col = mix(nuit, bleu, smoothstep(0.22, 0.82, f));
-  col = mix(col, cyan, smoothstep(0.40, 0.98, r.y) * 0.62);
-  col = mix(col, cuivre, smoothstep(0.70, 1.10, q.x * 1.2 + f * 0.4) * 0.45);
+  vec3 nrm = normalize(vec3(-grad * 0.55, 1.0));
+  vec3 lum = normalize(vec3(-0.38, 0.62, 0.68));
+  float lit = clamp(dot(nrm, lum), 0.0, 1.0);
 
-  // Les filaments clairs ne s'allument que là où l'écoulement se replie :
-  // sans ce seuil, la couleur bave partout et perd son côté net.
-  col += bleu * pow(smoothstep(0.66, 1.0, f), 3.0) * 0.55;
+  vec3 abysse  = vec3(0.016, 0.020, 0.140);
+  vec3 outremer = vec3(0.090, 0.130, 0.720);
+  vec3 iris    = vec3(0.330, 0.220, 0.880);
+  vec3 lavande = vec3(0.780, 0.760, 1.000);
 
-  vec2 d = uv - 0.5;
-  col *= smoothstep(0.95, 0.16, dot(d, d) * 2.3);
+  vec3 col = mix(abysse, outremer, smoothstep(0.18, 0.62, h));
+  col = mix(col, iris, smoothstep(0.48, 0.92, h));
 
-  // Voile de lisibilité : un fond animé ne garantit pas de rester sombre là où
-  // le texte se trouve. Le verre, lui, rehausse ce qu'il traverse : il n'en
-  // ressort que mieux.
-  col *= 0.52;
+  // L'arête éclairée. L'exposant élevé resserre le liseré lumineux le long du
+  // repli au lieu d'éclaircir toute la nappe.
+  col = mix(col, lavande, pow(lit, 5.0) * 0.85);
+  col += lavande * pow(lit, 14.0) * 0.30;
+
+  // Vignette douce, corrigée du rapport d'image pour ne pas s'ovaliser sur un
+  // écran large.
+  vec2 v = (uv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
+  col *= smoothstep(1.05, 0.22, dot(v, v) * 1.5);
+
+  // Voile de lisibilité, plus léger qu'avant : la nappe est lisse, le texte
+  // tient dessus sans qu'on l'écrase.
+  col *= 0.74;
 
   return col;
 }
@@ -563,40 +586,46 @@ void main() {
     /* LE POINT CLÉ. On ne floute pas : on RÉFRACTE. L'échantillon du fond est
        pris à des coordonnées décalées le long de la normale, d'autant plus
        loin qu'on approche du bord — c'est le comportement d'une lentille
-       épaisse, et c'est ce que l'œil reconnaît comme du verre. Un flou, lui,
+       épaisse, et c'est ce que l'oeil reconnaît comme du verre. Un flou, lui,
        se lit comme du plastique dépoli.
        Le profil est cubique : nul au centre, où l'on voit à travers NET, et
        très marqué sur les quelques pixels du rebord. */
-    float thickness = min(min(R.z, R.w), 30.0);
+    float thickness = min(min(R.z, R.w), 34.0);
     float depth = clamp(-sd / thickness, 0.0, 1.0);
     float rim = pow(1.0 - depth, 3.0);
-    vec2 bend = n * rim * thickness * 1.9;
+    vec2 bend = n * rim * thickness * 2.2;
 
     vec3 g = background((frag + bend) / uRes);
 
-    // Un verre parfaitement clair n'existe pas : une trace de diffusion, prise
-    // sur deux échantillons largement écartés, lui donne de la matière sans
-    // le rendre laiteux. 0,22 est la limite au-delà de laquelle on retombe
-    // dans le dépoli.
-    g = mix(g, 0.5 * (background((frag + bend + vec2(9.0, 5.0)) / uRes) +
-                      background((frag + bend - vec2(7.0, 8.0)) / uRes)), 0.22);
+    // Trace de diffusion seulement : 12 %. Au-delà on retombe dans le dépoli,
+    // et c'est précisément ce qu'on cherche à éviter.
+    g = mix(g, 0.5 * (background((frag + bend + vec2(10.0, 6.0)) / uRes) +
+                      background((frag + bend - vec2(8.0, 9.0)) / uRes)), 0.12);
 
-    // Le verre transmet plus qu'il n'absorbe : on relève, et on désature à
-    // peine. C'est ce gain qui détache la pièce du fond assombri.
-    g = g * (1.45 + lit * 0.34) + 0.028 + lit * 0.012;
-    g = mix(g, vec3(dot(g, vec3(0.299, 0.587, 0.114))), 0.10);
+    // Le verre transmet : il est plus CLAIR que ce qu'il couvre, jamais plus
+    // sombre. C'est ce gain qui fait qu'on lit une pièce posée dessus et non
+    // un trou découpé dedans.
+    g = g * (1.26 + lit * 0.26) + 0.022 + lit * 0.018;
+    g = mix(g, vec3(dot(g, vec3(0.299, 0.587, 0.114))), 0.06);
 
-    // Rebord : un liseré net, plus une bande plus large juste en retrait qui
-    // donne l'épaisseur. Sans cette seconde bande, la pièce reste une découpe
-    // plate posée sur l'image.
+    // Halo spéculaire : une large tache de lumière dans la masse, placée en
+    // haut à droite par une direction fixe. C'est elle qui donne le volume —
+    // sans elle, la pièce reste une plaque uniforme.
+    vec2 spec = (p / R.zw) - vec2(0.42, 0.50);
+    float bloom = exp(-dot(spec, spec) * 2.6);
+    g += vec3(0.085 + lit * 0.075) * bloom;
+
+    // Rebord : un liseré net et lumineux tout autour, plus une bande plus
+    // large juste en retrait qui donne l'épaisseur. Le liseré est ce qui
+    // détoure la pièce ; sans lui, du verre clair sur fond clair disparaît.
     float lightDir = clamp(dot(n, normalize(vec2(-0.42, 0.91))), 0.0, 1.0);
-    float edge  = 1.0 - smoothstep(0.0, 1.6, abs(sd));
-    float bevel = smoothstep(6.0, 0.0, abs(sd + 3.0));
-    g += vec3(edge * (0.14 + lightDir * (0.62 + lit * 0.30)));
-    g += vec3(bevel * lightDir * (0.16 + lit * 0.14));
+    float edge  = 1.0 - smoothstep(0.0, 1.8, abs(sd));
+    float bevel = smoothstep(7.0, 0.0, abs(sd + 3.5));
+    g += vec3(edge * (0.34 + lightDir * (0.72 + lit * 0.30)));
+    g += vec3(bevel * (0.06 + lightDir * (0.22 + lit * 0.14)));
 
     // Gradient interne haut→bas : la pièce a une épaisseur, elle ne flotte pas.
-    g += vec3(smoothstep(-R.w, R.w, p.y) * (0.035 + lit * 0.03));
+    g += vec3(smoothstep(-R.w, R.w, p.y) * (0.030 + lit * 0.025));
 
     col = mix(col, g, inside);
   }

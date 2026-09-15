@@ -3,142 +3,220 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FORGE — Batch creative automation</title>
+<title>FORGE — Automatisez vos créatives publicitaires</title>
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
+
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
-  background: #000000;
+  background: #0a0a0f;
   color: #ffffff;
   line-height: 1.5;
-}
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
-  background: #000000;
-  color: #ffffff;
-  line-height: 1.5;
+  overflow-x: hidden;
+  position: relative;
 }
 
+/* Grilles de croix fixes - parallax */
+.grid-container {
+  position: fixed;
+  top: 0;
+  width: 140px;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+  overflow: hidden;
+}
+
+.grid-container.left {
+  left: 0;
+}
+
+.grid-container.right {
+  right: 0;
+}
+
+.grid-cross {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  opacity: 0.12;
+  transition: opacity 0.3s ease, filter 0.3s ease;
+  will-change: opacity, filter;
+}
+
+.grid-cross.glow {
+  opacity: 0.6;
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+}
+
+/* Mask gradient pour fade en bas */
+.grid-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 200px;
+  background: linear-gradient(to bottom, transparent, #0a0a0f);
+  pointer-events: none;
+}
+
+/* Container principal */
 .container {
-  max-width: 580px;
+  max-width: 640px;
   margin: 0 auto;
-  padding: 120px 24px 80px;
+  padding: 100px 32px 80px;
   min-height: 100vh;
+  position: relative;
+  z-index: 2;
 }
 
 .logo {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.02em;
   margin-bottom: 80px;
   color: #ffffff;
 }
 
 .hero {
-  margin-bottom: 64px;
+  margin-bottom: 72px;
 }
 
 .hero h1 {
-  font-size: 48px;
+  font-size: 52px;
   font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1.1;
-  margin-bottom: 20px;
+  line-height: 1.08;
+  margin-bottom: 24px;
   color: #ffffff;
 }
 
 .hero p {
-  font-size: 17px;
-  line-height: 1.5;
-  color: #999999;
-  max-width: 480px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 520px;
 }
 
+/* Features glassmorphism */
 .features {
-  margin-bottom: 64px;
-  border-top: 1px solid #1a1a1a;
+  margin-bottom: 72px;
+  display: grid;
+  gap: 16px;
 }
 
 .feature {
-  padding: 24px 0;
-  border-bottom: 1px solid #1a1a1a;
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 28px 28px;
+  transition: all 0.3s ease;
+}
+
+.feature:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
 }
 
 .feature-title {
-  font-size: 15px;
-  font-weight: 500;
-  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 8px;
   color: #ffffff;
 }
 
 .feature-desc {
-  font-size: 14px;
-  color: #666666;
-  line-height: 1.4;
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.6);
+  line-height: 1.5;
 }
 
+/* Form glassmorphism */
 .form-section {
   margin-bottom: 80px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 36px 32px;
 }
 
 .form-title {
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 16px;
-  color: #999999;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.02em;
 }
 
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .form-input {
   width: 100%;
-  padding: 12px 14px;
-  background: #0a0a0a;
-  border: 1px solid #1a1a1a;
-  border-radius: 6px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
   font-size: 15px;
   color: #ffffff;
   font-family: inherit;
-  transition: border-color 0.15s ease;
+  transition: all 0.2s ease;
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #333333;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
 }
 
 .form-input::placeholder {
-  color: #666666;
+  color: rgba(255, 255, 255, 0.4);
 }
 
 .submit-btn {
   width: 100%;
-  padding: 12px 14px;
-  background: #ffffff;
-  border: none;
-  border-radius: 6px;
-  font-size: 15px;
-  font-weight: 500;
-  color: #000000;
+  padding: 15px 18px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #0a0a0f;
   font-family: inherit;
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: all 0.2s ease;
+  margin-top: 6px;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #e6e6e6;
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+
+.submit-btn:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .submit-btn:disabled {
@@ -148,19 +226,23 @@ body {
 
 .form-note {
   font-size: 13px;
-  color: #666666;
-  margin-top: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 16px;
+  text-align: center;
 }
 
 .success-message {
   display: none;
-  padding: 12px 14px;
-  background: #0a3a0a;
-  border: 1px solid #1a5a1a;
-  border-radius: 6px;
-  font-size: 14px;
+  padding: 18px 24px;
+  background: rgba(74, 222, 128, 0.12);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(74, 222, 128, 0.3);
+  border-radius: 14px;
+  font-size: 15px;
   color: #4ade80;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  text-align: center;
 }
 
 .success-message.show {
@@ -168,55 +250,79 @@ body {
 }
 
 .footer {
-  padding-top: 40px;
-  border-top: 1px solid #1a1a1a;
-  font-size: 13px;
-  color: #666666;
+  padding-top: 48px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.4);
+  text-align: center;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
+  .grid-container {
+    width: 80px;
+  }
   .container {
-    padding: 80px 20px 60px;
+    padding: 80px 24px 60px;
   }
   .hero h1 {
-    font-size: 36px;
+    font-size: 40px;
+  }
+  .hero p {
+    font-size: 16px;
+  }
+  .form-section {
+    padding: 28px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .grid-container {
+    display: none;
+  }
+  .hero h1 {
+    font-size: 32px;
   }
 }
 </style>
 </head>
 <body>
 
+<!-- Grille gauche -->
+<div class="grid-container left" id="gridLeft"></div>
+
+<!-- Grille droite -->
+<div class="grid-container right" id="gridRight"></div>
+
 <div class="container">
   
   <div class="logo">FORGE</div>
 
   <div class="hero">
-    <h1>Batch creative automation for ecommerce</h1>
-    <p>Turn raw footage into ready-to-publish ads in minutes. Derushing, editing, and creative generation in one pass.</p>
+    <h1>Automatisez vos créatives publicitaires</h1>
+    <p>Transformez vos rushs en publicités prêtes à diffuser. Dérushing automatique, montage intelligent et génération de multiples variantes en quelques minutes.</p>
   </div>
 
   <div class="features">
     <div class="feature">
-      <div class="feature-title">Batch processing</div>
-      <div class="feature-desc">12 ad variants from one brief, not 12 manual edits.</div>
+      <div class="feature-title">Génération par lot</div>
+      <div class="feature-desc">12 variantes créatives générées à partir d'un seul brief, pas 12 montages manuels.</div>
     </div>
     <div class="feature">
-      <div class="feature-title">Auto derushing</div>
-      <div class="feature-desc">Silence, filler, and retakes removed automatically.</div>
+      <div class="feature-title">Dérushing automatique</div>
+      <div class="feature-desc">Silences, hésitations et prises ratées éliminés automatiquement.</div>
     </div>
     <div class="feature">
-      <div class="feature-title">Static + video</div>
-      <div class="feature-desc">Same input, multiple formats. Export what you need.</div>
+      <div class="feature-title">Image et vidéo</div>
+      <div class="feature-desc">Même source, formats multiples. Exportez ce dont vous avez besoin.</div>
     </div>
   </div>
 
   <form class="form-section" id="waitlistForm">
-    <div class="form-title">Get early access</div>
+    <div class="form-title">Accès anticipé</div>
     
     <div class="form-group">
       <input 
         type="email" 
-        placeholder="Email" 
+        placeholder="Votre email" 
         class="form-input"
         id="emailInput"
         required
@@ -226,7 +332,7 @@ body {
     <div class="form-group">
       <input 
         type="tel" 
-        placeholder="Phone" 
+        placeholder="Votre téléphone" 
         class="form-input"
         id="phoneInput"
         required
@@ -234,27 +340,95 @@ body {
     </div>
     
     <button type="submit" class="submit-btn" id="submitBtn">
-      Join waitlist
+      Rejoindre la liste d'attente
     </button>
     
-    <div class="form-note">No spam. Unsubscribe anytime.</div>
+    <div class="form-note">Pas de spam. Désinscription à tout moment.</div>
   </form>
 
   <div class="success-message" id="successMessage">
-    ✓ You're on the list. We'll reach out soon.
+    ✓ Vous êtes sur la liste. On vous contacte très vite.
   </div>
 
   <div class="footer">
-    Built for agencies, creators, and ecommerce brands.
+    Conçu pour les agences, créateurs de contenu et marques e-commerce.
   </div>
 
 </div>
 
 <script>
+// ============================================
+// Configuration Supabase
+// ============================================
 var SUPABASE_URL      = 'https://rrdsabxmumjpuprwrvqw.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dG1nYWh4dndveXp3aGllcWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODAxMDQsImV4cCI6MjEwNTA1NjEwNH0.8zKC9fDej4IyS4xKHO6qKA1y4k75YfgTxJl85tlgok8';
 
-(function() {
+// ============================================
+// Génération des grilles de croix SVG
+// ============================================
+(function initGrids() {
+  var gridLeft = document.getElementById('gridLeft');
+  var gridRight = document.getElementById('gridRight');
+  
+  // SVG croix (plus simple que le code Framer)
+  var crossSVG = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 0V20M0 10H20" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  
+  // Configuration grille: 60px d'espacement
+  var spacing = 60;
+  var crossesPerColumn = Math.ceil(window.innerHeight / spacing) + 2;
+  var crossesPerRow = 2; // 2 colonnes par grille
+  
+  // Générer les croix pour chaque grille
+  [gridLeft, gridRight].forEach(function(container) {
+    for (var row = 0; row < crossesPerColumn; row++) {
+      for (var col = 0; col < crossesPerRow; col++) {
+        var cross = document.createElement('div');
+        cross.className = 'grid-cross';
+        cross.innerHTML = crossSVG;
+        cross.style.left = (col * spacing + 30) + 'px';
+        cross.style.top = (row * spacing - 30) + 'px';
+        container.appendChild(cross);
+      }
+    }
+  });
+})();
+
+// ============================================
+// Effet d'éclairage au curseur
+// ============================================
+(function initCursorGlow() {
+  var allCrosses = document.querySelectorAll('.grid-cross');
+  var glowRadius = 150; // rayon d'illumination en pixels
+  
+  document.addEventListener('mousemove', function(e) {
+    var mouseX = e.clientX;
+    var mouseY = e.clientY;
+    
+    allCrosses.forEach(function(cross) {
+      var rect = cross.getBoundingClientRect();
+      var crossX = rect.left + rect.width / 2;
+      var crossY = rect.top + rect.height / 2;
+      
+      // Distance entre curseur et croix
+      var distance = Math.sqrt(
+        Math.pow(mouseX - crossX, 2) + 
+        Math.pow(mouseY - crossY, 2)
+      );
+      
+      // Si dans le rayon, ajouter glow
+      if (distance < glowRadius) {
+        cross.classList.add('glow');
+      } else {
+        cross.classList.remove('glow');
+      }
+    });
+  });
+})();
+
+// ============================================
+// Formulaire de waitlist
+// ============================================
+(function initWaitlistForm() {
   var form = document.getElementById('waitlistForm');
   var emailInput = document.getElementById('emailInput');
   var phoneInput = document.getElementById('phoneInput');
@@ -278,12 +452,12 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
     }
 
     if (!SUPABASE_ANON_KEY) {
-      alert('Configuration error. Contact support.');
+      alert('Erreur de configuration. Contactez le support.');
       return;
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending...';
+    submitBtn.textContent = 'Envoi en cours...';
 
     fetch(SUPABASE_URL + '/rest/v1/waitlist_emails', {
       method: 'POST',
@@ -303,15 +477,15 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
         showSuccess();
       } else {
         return response.json().then(function(data) {
-          throw new Error(data.message || 'Network error');
+          throw new Error(data.message || 'Erreur réseau');
         });
       }
     })
     .catch(function(error) {
-      console.error('Error:', error);
-      alert('An error occurred. Please try again.');
+      console.error('Erreur:', error);
+      alert('Une erreur est survenue. Veuillez réessayer.');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Join waitlist';
+      submitBtn.textContent = 'Rejoindre la liste d'attente';
     });
   });
 
@@ -325,7 +499,7 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
     emailInput.value = '';
     phoneInput.value = '';
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Join waitlist';
+    submitBtn.textContent = 'Rejoindre la liste d'attente';
   }
 })();
 </script>

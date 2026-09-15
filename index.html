@@ -3,13 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FORGE — Automatisation créative</title>
-<link rel="preconnect" href="https://fonts.bunny.net">
-<link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900" rel="stylesheet">
+<title>FORGE — Batch creative automation</title>
 <style>
-/*──────────────────────────────────────────────────────────────────────────────
-  RESET
-──────────────────────────────────────────────────────────────────────────────*/
 * {
   margin: 0;
   padding: 0;
@@ -20,592 +15,245 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 50%, #E6F3F7 100%);
-  color: #1a1a1a;
-  min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  CLOUDS
-──────────────────────────────────────────────────────────────────────────────*/
-.cloud-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}
-.cloud {
-  position: absolute;
-  will-change: transform;
-}
-.cloud-part {
-  position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.6);
-  filter: blur(40px);
-}
-/* Cloud animations with different speeds */
-@keyframes float1  { 0% { transform: translateX(-10%); } 100% { transform: translateX(110%); } }
-@keyframes float2  { 0% { transform: translateX(-10%); } 100% { transform: translateX(110%); } }
-@keyframes float3  { 0% { transform: translateX(-10%); } 100% { transform: translateX(110%); } }
-
-.cloud:nth-child(1) { animation: float1 180s linear infinite; top: 5%; }
-.cloud:nth-child(2) { animation: float2 220s linear infinite; top: 15%; animation-delay: -60s; }
-.cloud:nth-child(3) { animation: float3 200s linear infinite; top: 25%; animation-delay: -120s; }
-.cloud:nth-child(4) { animation: float1 190s linear infinite; top: 35%; animation-delay: -40s; }
-.cloud:nth-child(5) { animation: float2 210s linear infinite; top: 45%; animation-delay: -100s; }
-.cloud:nth-child(6) { animation: float3 195s linear infinite; top: 55%; animation-delay: -80s; }
-.cloud:nth-child(7) { animation: float1 185s linear infinite; top: 65%; animation-delay: -140s; }
-.cloud:nth-child(8) { animation: float2 215s linear infinite; top: 75%; animation-delay: -20s; }
-
-.cloud:nth-child(1) .cloud-part { width: 300px; height: 150px; }
-.cloud:nth-child(2) .cloud-part { width: 400px; height: 200px; }
-.cloud:nth-child(3) .cloud-part { width: 250px; height: 130px; }
-.cloud:nth-child(4) .cloud-part { width: 350px; height: 180px; }
-.cloud:nth-child(5) .cloud-part { width: 280px; height: 140px; }
-.cloud:nth-child(6) .cloud-part { width: 320px; height: 160px; }
-.cloud:nth-child(7) .cloud-part { width: 380px; height: 190px; }
-.cloud:nth-child(8) .cloud-part { width: 260px; height: 135px; }
-
-/*──────────────────────────────────────────────────────────────────────────────
-  CONTAINER & LAYOUT
-──────────────────────────────────────────────────────────────────────────────*/
-.container {
-  position: relative;
-  z-index: 1;
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 60px 24px 80px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  BADGE
-──────────────────────────────────────────────────────────────────────────────*/
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 100px;
-  backdrop-filter: blur(12px);
-  font-size: 13px;
-  font-weight: 500;
-  color: #4a4a4a;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.badge-dot {
-  width: 8px;
-  height: 8px;
-  background: #4169E1;
-  border-radius: 50%;
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.5; transform: scale(1.2); }
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  FUR LOGO
-──────────────────────────────────────────────────────────────────────────────*/
-.fur-logo {
-  font-size: clamp(60px, 12vw, 120px);
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  margin-bottom: 24px;
-  position: relative;
-  color: #1a1a1a;
-  text-transform: uppercase;
-  line-height: 1;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.fur-logo span {
-  display: block;
-  text-shadow: 
-    0 0 1px rgba(26, 26, 26, 0.8),
-    0 1px 2px rgba(26, 26, 26, 0.7),
-    0 2px 3px rgba(26, 26, 26, 0.6),
-    0 3px 4px rgba(26, 26, 26, 0.5),
-    0 4px 5px rgba(26, 26, 26, 0.4),
-    0 5px 6px rgba(26, 26, 26, 0.3),
-    0 6px 7px rgba(26, 26, 26, 0.2),
-    0 7px 8px rgba(26, 26, 26, 0.15),
-    0 8px 10px rgba(26, 26, 26, 0.1),
-    0 0 10px rgba(26, 26, 26, 0.2),
-    0 0 20px rgba(26, 26, 26, 0.15),
-    0 0 30px rgba(26, 26, 26, 0.1),
-    0 10px 15px rgba(0, 0, 0, 0.2),
-    0 15px 25px rgba(0, 0, 0, 0.15);
-  filter: contrast(1.1) brightness(1.05);
-  animation: furBreath 4s ease-in-out infinite;
-}
-@keyframes furBreath {
-  0%, 100% {
-    text-shadow: 
-      0 0 1px rgba(26, 26, 26, 0.8),
-      0 1px 2px rgba(26, 26, 26, 0.7),
-      0 2px 3px rgba(26, 26, 26, 0.6),
-      0 3px 4px rgba(26, 26, 26, 0.5),
-      0 4px 5px rgba(26, 26, 26, 0.4),
-      0 5px 6px rgba(26, 26, 26, 0.3),
-      0 6px 7px rgba(26, 26, 26, 0.2),
-      0 7px 8px rgba(26, 26, 26, 0.15),
-      0 8px 10px rgba(26, 26, 26, 0.1),
-      0 0 10px rgba(26, 26, 26, 0.2),
-      0 0 20px rgba(26, 26, 26, 0.15),
-      0 0 30px rgba(26, 26, 26, 0.1),
-      0 10px 15px rgba(0, 0, 0, 0.2),
-      0 15px 25px rgba(0, 0, 0, 0.15);
-  }
-  50% {
-    text-shadow: 
-      0 0 1px rgba(26, 26, 26, 0.9),
-      0 1px 3px rgba(26, 26, 26, 0.8),
-      0 2px 4px rgba(26, 26, 26, 0.7),
-      0 3px 5px rgba(26, 26, 26, 0.6),
-      0 4px 6px rgba(26, 26, 26, 0.5),
-      0 5px 7px rgba(26, 26, 26, 0.4),
-      0 6px 8px rgba(26, 26, 26, 0.3),
-      0 7px 9px rgba(26, 26, 26, 0.2),
-      0 8px 12px rgba(26, 26, 26, 0.15),
-      0 0 15px rgba(26, 26, 26, 0.25),
-      0 0 25px rgba(26, 26, 26, 0.2),
-      0 0 35px rgba(26, 26, 26, 0.15),
-      0 12px 18px rgba(0, 0, 0, 0.25),
-      0 18px 30px rgba(0, 0, 0, 0.2);
-  }
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  HEADLINE & SUBHEADING
-──────────────────────────────────────────────────────────────────────────────*/
-.headline {
-  font-size: clamp(32px, 6vw, 48px);
-  font-weight: 700;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-  margin-bottom: 24px;
-  color: #1a1a1a;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.subheading {
-  font-size: 18px;
-  line-height: 1.6;
-  color: #4a4a4a;
-  margin-bottom: 48px;
-  max-width: 560px;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  FEATURES
-──────────────────────────────────────────────────────────────────────────────*/
-.features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-  width: 100%;
-  max-width: 900px;
-  margin-bottom: 48px;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.feature-card {
-  text-align: left;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-.feature-card:hover {
-  background: rgba(255, 255, 255, 0.85);
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-.feature-icon {
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.feature-icon svg {
-  width: 24px;
-  height: 24px;
-  stroke: #1a1a1a;
-}
-.feature-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1a1a1a;
-  margin-bottom: 8px;
-}
-.feature-description {
-  font-size: 14px;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  background: #000000;
+  color: #ffffff;
   line-height: 1.5;
-  color: #4a4a4a;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  background: #000000;
+  color: #ffffff;
+  line-height: 1.5;
 }
 
-/*──────────────────────────────────────────────────────────────────────────────
-  FORM
-──────────────────────────────────────────────────────────────────────────────*/
-.email-form {
-  width: 100%;
-  max-width: 480px;
-  margin-bottom: 24px;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.5s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
+.container {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 120px 24px 80px;
+  min-height: 100vh;
 }
-.input-wrapper {
-  display: flex;
-  gap: 12px;
-  padding: 8px;
-  background: rgba(255, 255, 255, 0.75);
-  border: 1px solid rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  backdrop-filter: blur(12px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-bottom: 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-.input-wrapper:focus-within {
-  background: rgba(255, 255, 255, 0.9);
-  border-color: #4169E1;
-  box-shadow: 0 0 0 4px rgba(65, 105, 225, 0.15);
-}
-.email-input {
-  flex: 1;
-  width: 100%;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 12px 16px;
-  font-size: 16px;
-  color: #1a1a1a;
-  font-family: inherit;
-}
-.email-input::placeholder {
-  color: #4a4a4a;
-}
-.submit-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  width: 100%;
-  background: linear-gradient(135deg, #4169E1, #1E90FF);
-  border: none;
-  border-radius: 12px;
-  color: white;
+
+.logo {
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-bottom: 80px;
+  color: #ffffff;
+}
+
+.hero {
+  margin-bottom: 64px;
+}
+
+.hero h1 {
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
+.hero p {
+  font-size: 17px;
+  line-height: 1.5;
+  color: #999999;
+  max-width: 480px;
+}
+
+.features {
+  margin-bottom: 64px;
+  border-top: 1px solid #1a1a1a;
+}
+
+.feature {
+  padding: 24px 0;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.feature-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #ffffff;
+}
+
+.feature-desc {
+  font-size: 14px;
+  color: #666666;
+  line-height: 1.4;
+}
+
+.form-section {
+  margin-bottom: 80px;
+}
+
+.form-title {
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.form-group {
+  margin-bottom: 12px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #ffffff;
+  font-family: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #333333;
+}
+
+.form-input::placeholder {
+  color: #666666;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #000000;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(65, 105, 225, 0.3);
-  margin-bottom: 12px;
+  transition: background 0.15s ease;
 }
+
 .submit-btn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(65, 105, 225, 0.4);
+  background: #e6e6e6;
 }
+
 .submit-btn:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
+
 .form-note {
   font-size: 13px;
-  color: #4a4a4a;
-  text-align: center;
+  color: #666666;
+  margin-top: 12px;
 }
 
-/*──────────────────────────────────────────────────────────────────────────────
-  SUCCESS MESSAGE
-──────────────────────────────────────────────────────────────────────────────*/
 .success-message {
   display: none;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 24px;
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid rgba(34, 197, 94, 0.4);
-  border-radius: 12px;
-  color: #15803d;
-  font-size: 15px;
-  font-weight: 500;
+  padding: 12px 14px;
+  background: #0a3a0a;
+  border: 1px solid #1a5a1a;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #4ade80;
   margin-bottom: 24px;
-  backdrop-filter: blur(10px);
 }
+
 .success-message.show {
-  display: flex;
-  animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-@keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  display: block;
 }
 
-/*──────────────────────────────────────────────────────────────────────────────
-  SOCIAL PROOF
-──────────────────────────────────────────────────────────────────────────────*/
-.social-proof {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.6s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.avatar-stack {
-  display: flex;
-  margin-left: 8px;
-}
-.avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid #E6F3F7;
-  margin-left: -12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-.proof-text {
-  font-size: 14px;
-  color: #4a4a4a;
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  FOOTER
-──────────────────────────────────────────────────────────────────────────────*/
 .footer {
-  margin-top: 64px;
-  animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.7s forwards;
-  opacity: 0;
-  transform: translateY(-20px);
-}
-.footer p {
-  font-size: 14px;
-  color: #4a4a4a;
+  padding-top: 40px;
+  border-top: 1px solid #1a1a1a;
+  font-size: 13px;
+  color: #666666;
 }
 
-/*──────────────────────────────────────────────────────────────────────────────
-  ANIMATIONS
-──────────────────────────────────────────────────────────────────────────────*/
-@keyframes fadeInUp {
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  RESPONSIVE
-──────────────────────────────────────────────────────────────────────────────*/
 @media (max-width: 640px) {
   .container {
-    padding: 40px 20px 60px;
+    padding: 80px 20px 60px;
   }
-  .fur-logo {
-    font-size: 48px;
-  }
-  .headline {
-    font-size: 28px;
-  }
-  .subheading {
-    font-size: 16px;
-  }
-  .features {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .social-proof {
-    flex-direction: column;
-    gap: 12px;
-  }
-}
-
-/*──────────────────────────────────────────────────────────────────────────────
-  REDUCED MOTION
-──────────────────────────────────────────────────────────────────────────────*/
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  .hero h1 {
+    font-size: 36px;
   }
 }
 </style>
 </head>
 <body>
 
-<!-- Cloud Background -->
-<div class="cloud-container">
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-  <div class="cloud"><div class="cloud-part"></div></div>
-</div>
-
-<!-- Main Container -->
 <div class="container">
   
-  <!-- Badge -->
-  <div class="badge">
-    <span class="badge-dot"></span>
-    Bêta privée en cours
+  <div class="logo">FORGE</div>
+
+  <div class="hero">
+    <h1>Batch creative automation for ecommerce</h1>
+    <p>Turn raw footage into ready-to-publish ads in minutes. Derushing, editing, and creative generation in one pass.</p>
   </div>
 
-  <!-- Logo with Fur Effect -->
-  <h1 class="fur-logo">
-    <span>FORGE</span>
-  </h1>
-
-  <!-- Headline -->
-  <h2 class="headline">
-    L'automatisation créative, à l'échelle
-  </h2>
-
-  <!-- Subheading -->
-  <p class="subheading">
-    Du tournage brut à la publicité prête à publier, en quelques minutes.<br>
-    Montage, tri des prises et production de créas par lot — tout est automatisé.
-  </p>
-
-  <!-- Features Grid -->
   <div class="features">
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-        </svg>
-      </div>
-      <h3 class="feature-title">Traitement par lot</h3>
-      <p class="feature-description">Douze variantes d'une même créa en une passe, pas douze allers-retours.</p>
+    <div class="feature">
+      <div class="feature-title">Batch processing</div>
+      <div class="feature-desc">12 ad variants from one brief, not 12 manual edits.</div>
     </div>
-    
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M4 7h16M4 12h16M4 17h16"/>
-          <path d="M10 3v4M14 3v4"/>
-        </svg>
-      </div>
-      <h3 class="feature-title">Montage automatique</h3>
-      <p class="feature-description">Les silences, les hésitations et les reprises partent tout seuls.</p>
+    <div class="feature">
+      <div class="feature-title">Auto derushing</div>
+      <div class="feature-desc">Silence, filler, and retakes removed automatically.</div>
     </div>
-    
-    <div class="feature-card">
-      <div class="feature-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="3" width="20" height="14" rx="2"/>
-          <path d="M8 21h8M12 17v4"/>
-        </svg>
-      </div>
-      <h3 class="feature-title">Statique et vidéo</h3>
-      <p class="feature-description">Le même brief sort en visuel fixe comme en vidéo montée.</p>
+    <div class="feature">
+      <div class="feature-title">Static + video</div>
+      <div class="feature-desc">Same input, multiple formats. Export what you need.</div>
     </div>
   </div>
 
-  <!-- Email + Phone Form -->
-  <form class="email-form" id="waitlistForm">
-    <div class="input-wrapper">
+  <form class="form-section" id="waitlistForm">
+    <div class="form-title">Get early access</div>
+    
+    <div class="form-group">
       <input 
         type="email" 
-        placeholder="votre@email.com" 
-        class="email-input"
+        placeholder="Email" 
+        class="form-input"
         id="emailInput"
         required
       />
     </div>
-    <div class="input-wrapper">
+    
+    <div class="form-group">
       <input 
         type="tel" 
-        placeholder="+33 6 12 34 56 78" 
-        class="email-input"
+        placeholder="Phone" 
+        class="form-input"
         id="phoneInput"
         required
       />
     </div>
+    
     <button type="submit" class="submit-btn" id="submitBtn">
-      <span>Rejoindre la liste</span>
-      <span>→</span>
+      Join waitlist
     </button>
-    <p class="form-note">Pas de spam. Désinscription en un clic.</p>
+    
+    <div class="form-note">No spam. Unsubscribe anytime.</div>
   </form>
 
-  <!-- Success Message -->
   <div class="success-message" id="successMessage">
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/>
-      <path d="M8 12L11 15L16 9" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span>Vous êtes sur la liste ! On vous contacte bientôt.</span>
+    ✓ You're on the list. We'll reach out soon.
   </div>
 
-  <!-- Social Proof -->
-  <div class="social-proof">
-    <div class="avatar-stack">
-      <div class="avatar" style="background: linear-gradient(135deg, #87CEEB 0%, #4682B4 100%);"></div>
-      <div class="avatar" style="background: linear-gradient(135deg, #B0C4DE 0%, #6495ED 100%);"></div>
-      <div class="avatar" style="background: linear-gradient(135deg, #ADD8E6 0%, #4169E1 100%);"></div>
-      <div class="avatar" style="background: linear-gradient(135deg, #00BFFF 0%, #1E90FF 100%);"></div>
-    </div>
-    <p class="proof-text">Rejoignez les premiers inscrits</p>
+  <div class="footer">
+    Built for agencies, creators, and ecommerce brands.
   </div>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <p>Conçu pour les agences, les créateurs et les marques e-commerce.</p>
-  </footer>
 
 </div>
 
 <script>
-/*──────────────────────────────────────────────────────────────────────────────
-  CONFIGURATION
-──────────────────────────────────────────────────────────────────────────────*/
 var SUPABASE_URL      = 'https://rrdsabxmumjpuprwrvqw.supabase.co';
-var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dG1nYWh4dndveXp3aGllcWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODAxMDQsImV4cCI6MjEwNTA1NjEwNH0.8zKC9fDej4IyS4xKHO6qKA1y4k75YfgTxJl85tlgok8';   // ← Mets ta clé anon / publishable ici
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dG1nYWh4dndveXp3aGllcWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODAxMDQsImV4cCI6MjEwNTA1NjEwNH0.8zKC9fDej4IyS4xKHO6qKA1y4k75YfgTxJl85tlgok8';
 
-/*──────────────────────────────────────────────────────────────────────────────
-  FORM HANDLING
-──────────────────────────────────────────────────────────────────────────────*/
 (function() {
   var form = document.getElementById('waitlistForm');
   var emailInput = document.getElementById('emailInput');
@@ -619,28 +267,24 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
     var email = emailInput.value.trim();
     var phone = phoneInput.value.trim();
     
-    // Validation basique
     if (!email || !isValidEmail(email)) {
-      shakeInput(emailInput.parentElement);
+      emailInput.focus();
       return;
     }
 
     if (!phone || phone.length < 10) {
-      shakeInput(phoneInput.parentElement);
+      phoneInput.focus();
       return;
     }
 
-    // Vérifier config
     if (!SUPABASE_ANON_KEY) {
-      alert('Configuration Supabase manquante. Voir le code source.');
+      alert('Configuration error. Contact support.');
       return;
     }
 
-    // Désactiver le bouton
     submitBtn.disabled = true;
-    submitBtn.querySelector('span').textContent = 'Envoi...';
+    submitBtn.textContent = 'Sending...';
 
-    // Envoyer à Supabase
     fetch(SUPABASE_URL + '/rest/v1/waitlist_emails', {
       method: 'POST',
       headers: {
@@ -656,53 +300,33 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
     })
     .then(function(response) {
       if (response.ok || response.status === 409) {
-        // Succès (ou déjà inscrit = aussi un succès)
         showSuccess();
       } else {
         return response.json().then(function(data) {
-          throw new Error(data.message || 'Erreur réseau');
+          throw new Error(data.message || 'Network error');
         });
       }
     })
     .catch(function(error) {
-      console.error('Erreur:', error);
-      alert('Une erreur est survenue. Réessayez.');
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
       submitBtn.disabled = false;
-      submitBtn.querySelector('span').textContent = 'Rejoindre la liste';
+      submitBtn.textContent = 'Join waitlist';
     });
   });
 
   function isValidEmail(email) {
-    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
-  }
-
-  function shakeInput(wrapper) {
-    wrapper.style.animation = 'shake 0.5s';
-    setTimeout(function() {
-      wrapper.style.animation = '';
-    }, 500);
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
   function showSuccess() {
-    form.style.transition = 'opacity 0.5s, transform 0.5s';
-    form.style.opacity = '0';
-    form.style.transform = 'translateY(-20px)';
-    
-    setTimeout(function() {
-      form.style.display = 'none';
-      successMessage.classList.add('show');
-      emailInput.value = '';
-      phoneInput.value = '';
-      submitBtn.disabled = false;
-      submitBtn.querySelector('span').textContent = 'Rejoindre la liste';
-    }, 500);
+    form.style.display = 'none';
+    successMessage.classList.add('show');
+    emailInput.value = '';
+    phoneInput.value = '';
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Join waitlist';
   }
-
-  // Ajouter animation shake
-  var style = document.createElement('style');
-  style.textContent = '@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }';
-  document.head.appendChild(style);
 })();
 </script>
 

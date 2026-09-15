@@ -612,7 +612,7 @@ void main() {
        se lit comme du plastique dépoli.
        Le profil est cubique : nul au centre, où l'on voit à travers NET, et
        très marqué sur les quelques pixels du rebord. */
-    float thickness = min(min(R.z, R.w), 34.0);
+    float thickness = min(min(R.z, R.w), 16.0);
     float depth = clamp(-sd / thickness, 0.0, 1.0);
     float rim = pow(1.0 - depth, 3.0);
     vec2 bend = n * rim * thickness * 2.2;
@@ -641,10 +641,10 @@ void main() {
     // large juste en retrait qui donne l'épaisseur. Le liseré est ce qui
     // détoure la pièce ; sans lui, du verre clair sur fond clair disparaît.
     float lightDir = clamp(dot(n, normalize(vec2(-0.42, 0.91))), 0.0, 1.0);
-    float edge  = 1.0 - smoothstep(0.0, 1.8, abs(sd));
-    float bevel = smoothstep(7.0, 0.0, abs(sd + 3.5));
+    float edge  = 1.0 - smoothstep(0.0, 1.3, abs(sd));
+    float bevel = smoothstep(3.2, 0.0, abs(sd + 1.6));
     g += vec3(edge * (0.34 + lightDir * (0.72 + lit * 0.30)));
-    g += vec3(bevel * (0.06 + lightDir * (0.22 + lit * 0.14)));
+    g += vec3(bevel * (0.04 + lightDir * (0.15 + lit * 0.10)));
 
     // Gradient interne haut→bas : la pièce a une épaisseur, elle ne flotte pas.
     g += vec3(smoothstep(-R.w, R.w, p.y) * (0.030 + lit * 0.025));

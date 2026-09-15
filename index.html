@@ -3,22 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FORGE — Automatisez vos créatives publicitaires</title>
+<title>FORGE — Batch creative automation</title>
 <style>
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 body {
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
-  background: #0a0a0f;
+  background: #000000;
   color: #ffffff;
   line-height: 1.5;
   overflow-x: hidden;
@@ -48,14 +46,14 @@ body {
   position: absolute;
   width: 20px;
   height: 20px;
-  opacity: 0.12;
+  opacity: 0.15;
   transition: opacity 0.3s ease, filter 0.3s ease;
   will-change: opacity, filter;
 }
 
 .grid-cross.glow {
-  opacity: 0.6;
-  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.4));
+  opacity: 0.7;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.5));
 }
 
 /* Mask gradient pour fade en bas */
@@ -66,157 +64,124 @@ body {
   left: 0;
   right: 0;
   height: 200px;
-  background: linear-gradient(to bottom, transparent, #0a0a0f);
+  background: linear-gradient(to bottom, transparent, #000000);
   pointer-events: none;
 }
 
-/* Container principal */
 .container {
-  max-width: 640px;
+  max-width: 580px;
   margin: 0 auto;
-  padding: 100px 32px 80px;
+  padding: 120px 24px 80px;
   min-height: 100vh;
   position: relative;
   z-index: 2;
 }
 
 .logo {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.02em;
+  letter-spacing: -0.01em;
   margin-bottom: 80px;
   color: #ffffff;
 }
 
 .hero {
-  margin-bottom: 72px;
+  margin-bottom: 64px;
 }
 
 .hero h1 {
-  font-size: 52px;
+  font-size: 48px;
   font-weight: 600;
   letter-spacing: -0.03em;
-  line-height: 1.08;
-  margin-bottom: 24px;
+  line-height: 1.1;
+  margin-bottom: 20px;
   color: #ffffff;
 }
 
 .hero p {
-  font-size: 18px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.65);
-  max-width: 520px;
+  font-size: 17px;
+  line-height: 1.5;
+  color: #999999;
+  max-width: 480px;
 }
 
-/* Features glassmorphism */
 .features {
-  margin-bottom: 72px;
-  display: grid;
-  gap: 16px;
+  margin-bottom: 64px;
+  border-top: 1px solid #1a1a1a;
 }
 
 .feature {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  padding: 28px 28px;
-  transition: all 0.3s ease;
-}
-
-.feature:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.15);
-  transform: translateY(-2px);
+  padding: 24px 0;
+  border-bottom: 1px solid #1a1a1a;
 }
 
 .feature-title {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 6px;
   color: #ffffff;
 }
 
 .feature-desc {
-  font-size: 15px;
-  color: rgba(255, 255, 255, 0.6);
-  line-height: 1.5;
+  font-size: 14px;
+  color: #666666;
+  line-height: 1.4;
 }
 
-/* Form glassmorphism */
 .form-section {
   margin-bottom: 80px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  padding: 36px 32px;
 }
 
 .form-title {
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  color: rgba(255, 255, 255, 0.8);
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #999999;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .form-group {
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .form-input {
   width: 100%;
-  padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  padding: 12px 14px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
   font-size: 15px;
   color: #ffffff;
   font-family: inherit;
-  transition: all 0.2s ease;
+  transition: border-color 0.15s ease;
 }
 
 .form-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.3);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+  border-color: #333333;
 }
 
 .form-input::placeholder {
-  color: rgba(255, 255, 255, 0.4);
+  color: #666666;
 }
 
 .submit-btn {
   width: 100%;
-  padding: 15px 18px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  color: #0a0a0f;
+  padding: 12px 14px;
+  background: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #000000;
   font-family: inherit;
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 6px;
+  transition: background 0.15s ease;
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
-}
-
-.submit-btn:active:not(:disabled) {
-  transform: translateY(0);
+  background: #e6e6e6;
 }
 
 .submit-btn:disabled {
@@ -226,23 +191,19 @@ body {
 
 .form-note {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 16px;
-  text-align: center;
+  color: #666666;
+  margin-top: 12px;
 }
 
 .success-message {
   display: none;
-  padding: 18px 24px;
-  background: rgba(74, 222, 128, 0.12);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(74, 222, 128, 0.3);
-  border-radius: 14px;
-  font-size: 15px;
+  padding: 12px 14px;
+  background: #0a3a0a;
+  border: 1px solid #1a5a1a;
+  border-radius: 6px;
+  font-size: 14px;
   color: #4ade80;
-  margin-bottom: 32px;
-  text-align: center;
+  margin-bottom: 24px;
 }
 
 .success-message.show {
@@ -250,36 +211,30 @@ body {
 }
 
 .footer {
-  padding-top: 48px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.4);
-  text-align: center;
+  padding-top: 40px;
+  border-top: 1px solid #1a1a1a;
+  font-size: 13px;
+  color: #666666;
 }
 
 @media (max-width: 768px) {
   .grid-container {
     width: 80px;
   }
+}
+
+@media (max-width: 640px) {
   .container {
-    padding: 80px 24px 60px;
+    padding: 80px 20px 60px;
   }
   .hero h1 {
-    font-size: 40px;
-  }
-  .hero p {
-    font-size: 16px;
-  }
-  .form-section {
-    padding: 28px 24px;
+    font-size: 36px;
   }
 }
 
 @media (max-width: 480px) {
   .grid-container {
     display: none;
-  }
-  .hero h1 {
-    font-size: 32px;
   }
 }
 </style>
@@ -297,32 +252,32 @@ body {
   <div class="logo">FORGE</div>
 
   <div class="hero">
-    <h1>Automatisez vos créatives publicitaires</h1>
-    <p>Transformez vos rushs en publicités prêtes à diffuser. Dérushing automatique, montage intelligent et génération de multiples variantes en quelques minutes.</p>
+    <h1>Batch creative automation for ecommerce</h1>
+    <p>Turn raw footage into ready-to-publish ads in minutes. Derushing, editing, and creative generation in one pass.</p>
   </div>
 
   <div class="features">
     <div class="feature">
-      <div class="feature-title">Génération par lot</div>
-      <div class="feature-desc">12 variantes créatives générées à partir d'un seul brief, pas 12 montages manuels.</div>
+      <div class="feature-title">Batch processing</div>
+      <div class="feature-desc">12 ad variants from one brief, not 12 manual edits.</div>
     </div>
     <div class="feature">
-      <div class="feature-title">Dérushing automatique</div>
-      <div class="feature-desc">Silences, hésitations et prises ratées éliminés automatiquement.</div>
+      <div class="feature-title">Auto derushing</div>
+      <div class="feature-desc">Silence, filler, and retakes removed automatically.</div>
     </div>
     <div class="feature">
-      <div class="feature-title">Image et vidéo</div>
-      <div class="feature-desc">Même source, formats multiples. Exportez ce dont vous avez besoin.</div>
+      <div class="feature-title">Static + video</div>
+      <div class="feature-desc">Same input, multiple formats. Export what you need.</div>
     </div>
   </div>
 
   <form class="form-section" id="waitlistForm">
-    <div class="form-title">Accès anticipé</div>
+    <div class="form-title">Get early access</div>
     
     <div class="form-group">
       <input 
         type="email" 
-        placeholder="Votre email" 
+        placeholder="Email" 
         class="form-input"
         id="emailInput"
         required
@@ -332,7 +287,7 @@ body {
     <div class="form-group">
       <input 
         type="tel" 
-        placeholder="Votre téléphone" 
+        placeholder="Phone" 
         class="form-input"
         id="phoneInput"
         required
@@ -340,18 +295,18 @@ body {
     </div>
     
     <button type="submit" class="submit-btn" id="submitBtn">
-      Rejoindre la liste d'attente
+      Join waitlist
     </button>
     
-    <div class="form-note">Pas de spam. Désinscription à tout moment.</div>
+    <div class="form-note">No spam. Unsubscribe anytime.</div>
   </form>
 
   <div class="success-message" id="successMessage">
-    ✓ Vous êtes sur la liste. On vous contacte très vite.
+    ✓ You're on the list. We'll reach out soon.
   </div>
 
   <div class="footer">
-    Conçu pour les agences, créateurs de contenu et marques e-commerce.
+    Built for agencies, creators, and ecommerce brands.
   </div>
 
 </div>
@@ -370,13 +325,13 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
   var gridLeft = document.getElementById('gridLeft');
   var gridRight = document.getElementById('gridRight');
   
-  // SVG croix (plus simple que le code Framer)
+  // SVG croix simple
   var crossSVG = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 0V20M0 10H20" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg>';
   
-  // Configuration grille: 60px d'espacement
+  // Configuration: 60px d'espacement
   var spacing = 60;
   var crossesPerColumn = Math.ceil(window.innerHeight / spacing) + 2;
-  var crossesPerRow = 2; // 2 colonnes par grille
+  var crossesPerRow = 2;
   
   // Générer les croix pour chaque grille
   [gridLeft, gridRight].forEach(function(container) {
@@ -398,7 +353,7 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // ============================================
 (function initCursorGlow() {
   var allCrosses = document.querySelectorAll('.grid-cross');
-  var glowRadius = 150; // rayon d'illumination en pixels
+  var glowRadius = 150;
   
   document.addEventListener('mousemove', function(e) {
     var mouseX = e.clientX;
@@ -409,13 +364,11 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
       var crossX = rect.left + rect.width / 2;
       var crossY = rect.top + rect.height / 2;
       
-      // Distance entre curseur et croix
       var distance = Math.sqrt(
         Math.pow(mouseX - crossX, 2) + 
         Math.pow(mouseY - crossY, 2)
       );
       
-      // Si dans le rayon, ajouter glow
       if (distance < glowRadius) {
         cross.classList.add('glow');
       } else {
@@ -428,7 +381,7 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 // ============================================
 // Formulaire de waitlist
 // ============================================
-(function initWaitlistForm() {
+(function() {
   var form = document.getElementById('waitlistForm');
   var emailInput = document.getElementById('emailInput');
   var phoneInput = document.getElementById('phoneInput');
@@ -452,12 +405,12 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
     }
 
     if (!SUPABASE_ANON_KEY) {
-      alert('Erreur de configuration. Contactez le support.');
+      alert('Configuration error. Contact support.');
       return;
     }
 
     submitBtn.disabled = true;
-    submitBtn.textContent = 'Envoi en cours...';
+    submitBtn.textContent = 'Sending...';
 
     fetch(SUPABASE_URL + '/rest/v1/waitlist_emails', {
       method: 'POST',
@@ -477,15 +430,15 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
         showSuccess();
       } else {
         return response.json().then(function(data) {
-          throw new Error(data.message || 'Erreur réseau');
+          throw new Error(data.message || 'Network error');
         });
       }
     })
     .catch(function(error) {
-      console.error('Erreur:', error);
-      alert('Une erreur est survenue. Veuillez réessayer.');
+      console.error('Error:', error);
+      alert('An error occurred. Please try again.');
       submitBtn.disabled = false;
-      submitBtn.textContent = 'Rejoindre la liste d'attente';
+      submitBtn.textContent = 'Join waitlist';
     });
   });
 
@@ -499,7 +452,7 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
     emailInput.value = '';
     phoneInput.value = '';
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Rejoindre la liste d'attente';
+    submitBtn.textContent = 'Join waitlist';
   }
 })();
 </script>

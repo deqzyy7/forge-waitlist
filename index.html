@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>FORGE — Batch creative automation</title>
-<meta name="description" content="Turn raw footage into ready-to-publish ads in minutes. Derushing, editing, and creative generation in one pass.">
+<title>FORGE — La production de vos créas publicitaires, automatisée</title>
+<meta name="description" content="De vos fichiers de tournage à vos publicités prêtes à diffuser. Transcription, coupe, montage, sous-titrage et déclinaison par lot — vidéo et statique, depuis un seul brief.">
 <meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
-<meta property="og:title" content="FORGE — Batch creative automation">
-<meta property="og:description" content="Turn raw footage into ready-to-publish ads in minutes.">
+<meta property="og:title" content="FORGE — La production de vos créas publicitaires, automatisée">
+<meta property="og:description" content="De vos fichiers de tournage à vos publicités prêtes à diffuser, en quelques minutes.">
 
 <style>
 /* ===========================================================================
@@ -41,7 +41,7 @@ body {
   --ink: #ffffff;
   --ink-2: rgba(255, 255, 255, 0.66);
   --ink-3: rgba(255, 255, 255, 0.42);
-  --accent: #3d8bff;
+  --accent: #ffffff;
 
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
                "Segoe UI", system-ui, sans-serif;
@@ -171,7 +171,7 @@ body.native-scroll #spacer { display: none; }
 .logo .dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 14px rgba(61, 139, 255, 0.9);
+  box-shadow: 0 0 14px rgba(255, 255, 255, 0.85);
   animation: pulse 3.4s var(--ease) infinite;
 }
 @keyframes pulse {
@@ -196,8 +196,9 @@ body.native-scroll #spacer { display: none; }
 .hero p {
   font-size: 17.5px;
   line-height: 1.55;
-  color: var(--ink-2);
+  color: rgba(255, 255, 255, 0.86);
   max-width: 470px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 1px 14px rgba(0, 0, 0, 0.55);
 }
 
 /* --------------------------------------------------------------- le verre */
@@ -227,13 +228,13 @@ body.no-gl .glass {
   font-weight: 550;
   margin-bottom: 5px;
   letter-spacing: -0.01em;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 1px 12px rgba(0, 0, 0, 0.6);
 }
 .feature-desc {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.60);
+  color: rgba(255, 255, 255, 0.80);
   line-height: 1.45;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 1px 12px rgba(0, 0, 0, 0.6);
 }
 
 /* ------------------------------------------------------------ formulaire */
@@ -258,7 +259,7 @@ body.no-gl .glass {
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(6, 8, 26, 0.55);
+  background: rgba(0, 0, 0, 0.46);
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 14px;
   font-size: 15px;
@@ -272,9 +273,9 @@ body.no-gl .glass {
 .form-input::placeholder { color: rgba(255, 255, 255, 0.34); }
 .form-input:focus {
   outline: none;
-  background: rgba(6, 8, 26, 0.68);
+  background: rgba(0, 0, 0, 0.60);
   border-color: rgba(255, 255, 255, 0.34);
-  box-shadow: 0 0 0 4px rgba(61, 139, 255, 0.14);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.12);
 }
 .form-input.err {
   border-color: rgba(255, 92, 110, 0.75);
@@ -315,7 +316,7 @@ body.no-gl .submit-btn {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.58);
   margin-top: 14px;
-  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.85), 0 1px 12px rgba(0, 0, 0, 0.6);
 }
 .form-note.err { color: #ff8a9c; }
 
@@ -340,7 +341,7 @@ body.no-gl .submit-btn {
   display: grid; place-items: center;
   width: 30px; height: 30px; flex: 0 0 30px;
   border-radius: 50%;
-  background: rgba(61, 139, 255, 0.18);
+  background: rgba(255, 255, 255, 0.16);
   color: var(--accent);
 }
 
@@ -389,44 +390,45 @@ body.no-gl .submit-btn {
     </div>
 
     <div class="hero">
-      <h1 class="rise" style="--i:1">Batch creative automation for ecommerce</h1>
+      <h1 class="rise" style="--i:1">La production de vos créas publicitaires, automatisée</h1>
       <p class="rise" style="--i:2">
-        Turn raw footage into ready-to-publish ads in minutes. Derushing, editing,
-        and creative generation in one pass.
+        Vous déposez vos fichiers de tournage et votre brief. FORGE transcrit, coupe,
+        monte, sous-titre et exporte vos publicités au format de chaque réseau. Vos
+        visuels statiques sont générés dans la foulée, depuis le même brief.
       </p>
     </div>
 
     <div class="features">
       <div class="feature glass rise" style="--i:3" data-glass="20">
-        <div class="feature-title">Batch processing</div>
-        <div class="feature-desc">12 ad variants from one brief, not 12 manual edits.</div>
+        <div class="feature-title">Montage automatique</div>
+        <div class="feature-desc">Vos vidéos sont transcrites, puis les silences, les hésitations et les prises ratées sont retirés. Vous récupérez un montage propre sans ouvrir de logiciel.</div>
       </div>
       <div class="feature glass rise" style="--i:4" data-glass="20">
-        <div class="feature-title">Auto derushing</div>
-        <div class="feature-desc">Silence, filler, and retakes removed automatically.</div>
+        <div class="feature-title">Déclinaison par lot</div>
+        <div class="feature-desc">Un brief, douze variantes. Accroches, sous-titres et formats déclinés en une seule passe, au lieu de douze exports à la main.</div>
       </div>
       <div class="feature glass rise" style="--i:5" data-glass="20">
-        <div class="feature-title">Static + video</div>
-        <div class="feature-desc">Same input, multiple formats. Export what you need.</div>
+        <div class="feature-title">Vidéo et statique</div>
+        <div class="feature-desc">Publicités vidéo, visuels produit et contenus UGC générés par IA, dans la même interface et depuis le même brief.</div>
       </div>
     </div>
 
     <form class="form-section glass rise" style="--i:6" id="waitlistForm" data-glass="24" novalidate>
-      <div class="form-title">Get early access</div>
+      <div class="form-title">Accès anticipé</div>
 
       <div class="form-group">
-        <input type="email" placeholder="Email" class="form-input" id="emailInput"
-               autocomplete="email" aria-label="Email" required />
+        <input type="email" placeholder="E-mail" class="form-input" id="emailInput"
+               autocomplete="email" aria-label="Votre adresse e-mail" required />
       </div>
 
       <div class="form-group">
-        <input type="tel" placeholder="Phone" class="form-input" id="phoneInput"
-               autocomplete="tel" aria-label="Phone number" required />
+        <input type="tel" placeholder="Téléphone" class="form-input" id="phoneInput"
+               autocomplete="tel" aria-label="Votre numéro de téléphone" required />
       </div>
 
-      <button type="submit" class="submit-btn" id="submitBtn" data-glass="18">Join waitlist</button>
+      <button type="submit" class="submit-btn" id="submitBtn" data-glass="18">Rejoindre la liste</button>
 
-      <div class="form-note" id="formNote">No spam. Unsubscribe anytime.</div>
+      <div class="form-note" id="formNote">Pas de spam. Désinscription en un clic.</div>
     </form>
 
     <div class="success-message glass" id="successMessage" role="status" data-glass="20">
@@ -435,11 +437,11 @@ body.no-gl .submit-btn {
           <path d="m4.5 10.5 3.6 3.6L15.5 6.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </span>
-      You're on the list. We'll reach out soon.
+      Vous êtes sur la liste. Nous vous écrivons dès l’ouverture de votre accès.
     </div>
 
     <div class="footer rise" style="--i:7">
-      Built for agencies, creators, and ecommerce brands.
+      Conçu pour les agences, les créateurs et les marques e-commerce.
     </div>
 
   </div>
@@ -548,10 +550,14 @@ vec3 background(vec2 uv) {
      bleu roi franchement saturé, et la crête monte jusqu'au lavande blanc.
      C'est l'ÉCART entre ces trois points qui fait le rendu — une palette
      resserrée donne le dégradé mou qu'on avait. */
-  vec3 creux   = vec3(0.012, 0.016, 0.105);
-  vec3 roi     = vec3(0.115, 0.105, 0.930);
-  vec3 iris    = vec3(0.330, 0.250, 0.940);
-  vec3 lavande = vec3(0.760, 0.700, 1.000);
+  /* Monochrome. Sans teinte pour porter la forme, c'est l'ÉCART de valeur qui
+     doit tout faire : le creux tombe au noir, la masse reste basse, et seule
+     la crête monte au blanc. Une palette grise resserrée donnerait une page
+     terne — la lecture du pli vient de l'amplitude, pas de la couleur. */
+  vec3 creux   = vec3(0.010);
+  vec3 roi     = vec3(0.150);
+  vec3 iris    = vec3(0.300);
+  vec3 lavande = vec3(1.000);
 
   vec3 col = mix(creux, roi, smoothstep(0.24, 0.60, h));
   col = mix(col, iris, smoothstep(0.58, 0.88, h));
@@ -568,7 +574,13 @@ vec3 background(vec2 uv) {
   col *= smoothstep(1.05, 0.12, dot(v, v) * 1.55);
 
   // Voile de lisibilité.
-  col *= 0.60;
+  col *= 0.62;
+
+  /* Compression des hautes lumières. Assombrir l'ensemble aurait tué le
+     contraste qu'on vient de construire ; cette courbe ne touche presque pas
+     les noirs ni les demi-teintes, et empêche seulement la crête de saturer.
+     C'est ce qui rend le texte lisible par-dessus sans aplatir l'image. */
+  col = col / (1.0 + col * 0.42);
 
   return col;
 }
@@ -994,17 +1006,17 @@ void main() {
       var tel  = phone.value.trim();
 
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) {
-        return fail(email, 'That email address doesn’t look right.');
+        return fail(email, 'Cette adresse e-mail ne semble pas valide.');
       }
       // On compte les chiffres, pas les caractères : « +33 6 12 34 56 78 » est
       // valide et ne doit pas être refusé pour ses espaces.
       if ((tel.match(/\d/g) || []).length < 8) {
-        return fail(phone, 'That phone number doesn’t look right.');
+        return fail(phone, 'Ce numéro de téléphone ne semble pas valide.');
       }
 
       clearError();
       btn.disabled = true;
-      btn.textContent = 'Sending…';
+      btn.textContent = 'Envoi…';
 
       fetch(SUPABASE_URL + '/rest/v1/' + TABLE, {
         method: 'POST',
@@ -1027,9 +1039,9 @@ void main() {
       .catch(function (err) {
         console.error(err);
         btn.disabled = false;
-        btn.textContent = 'Join waitlist';
+        btn.textContent = 'Rejoindre la liste';
         note.classList.add('err');
-        note.textContent = 'Something went wrong. Please try again.';
+        note.textContent = 'Une erreur est survenue. R\u00e9essayez dans un instant.';
       });
     });
 

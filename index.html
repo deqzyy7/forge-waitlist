@@ -503,50 +503,72 @@ float fbm(vec2 p) {
    mou ; avec lui, la nappe a un dessus et un dessous. */
 
 float hauteur(vec2 p, float t) {
-  // Deux couches qui dérivent en sens inverse : leur interférence crée le
-  // repli, et comme leurs vitesses sont incommensurables il ne se répète pas.
-  return 0.62 * noise(p * 0.85 + vec2(t * 0.11, t * 0.07))
-       + 0.30 * noise(p * 1.70 + vec2(-t * 0.09, t * 0.13) + 3.1);
+  /* Un pli en S, pas un nuage. Deux sinus de très basse fréquence dont chacun
+     module la PHASE de l'autre : c'est cette modulation croisée qui courbe la
+     crête et lui donne son serpentement, là où une simple somme de sinus
+     donnerait des vagues parallèles. Un bruit, lui, produirait des taches —
+     c'est ce qu'on avait, et c'est ce qui se lisait comme de la fumée. */
+  float a = sin(p.x * 0.52 + sin(p.y * 0.36 + t * 0.085) * 1.75 + t * 0.06);
+  float b = sin(p.y * 0.45 + sin(p.x * 0.29 - t * 0.062) * 1.55 - t * 0.048);
+  // Une troisième onde, plus lente et plus large, empêche que le motif se lise
+  // comme une grille : elle décale l'ensemble sans créer de nouvelle forme.
+  float c = sin((p.x + p.y) * 0.21 + t * 0.037);
+  return 0.5 + 0.26 * a + 0.21 * b + 0.10 * c;
 }
 
 vec3 background(vec2 uv) {
-  float t = uTime * 0.9;
+  float t = uTime;
 
-  vec2 p = uv * 2.6;
+  // Fréquence calée pour que deux à trois plis traversent l'écran : plus bas,
+  // le pli est plus grand que la page et on n'en voit qu'un morceau ; plus
+  // haut, on retombe dans le motif répétitif.
+  vec2 p = uv * 11.5;
   p.x *= uRes.x / uRes.y;
 
   float h = hauteur(p, t);
 
-  // Pente du champ, par différences finies : c'est la normale de la nappe.
-  float d = 0.012;
+  // Pente du champ : la normale de la nappe.
+  float d = 0.020;
   vec2 grad = vec2(hauteur(p + vec2(d, 0.0), t) - hauteur(p - vec2(d, 0.0), t),
                    hauteur(p + vec2(0.0, d), t) - hauteur(p - vec2(0.0, d), t)) / (2.0 * d);
 
-  vec3 nrm = normalize(vec3(-grad * 0.55, 1.0));
-  vec3 lum = normalize(vec3(-0.38, 0.62, 0.68));
-  float lit = clamp(dot(nrm, lum), 0.0, 1.0);
+  vec3 nrm = normalize(vec3(-grad * 4.2, 1.0));
+  // Lumière RASANTE : un z faible fait que seules les pentes tournées vers
+  // elle s'allument. Avec un z élevé, toute surface plate capte la lumière et
+  // la nappe blanchit d'un bloc.
+  vec3 lum = normalize(vec3(-0.58, 0.64, 0.26));
+  /* Le produit scalaire ne balaie jamais 0–1 en pratique : sur une nappe
+     aussi lisse il reste coincé dans une bande étroite, et l'élever à la
+     puissance n'en laisse plus rien. On étire donc la plage RÉELLEMENT
+     observée sur toute l'échelle avant de s'en servir — sans cette remise à
+     l'échelle, l'arête éclairée n'apparaît tout simplement pas. */
+  float lit = smoothstep(0.34, 0.56, dot(nrm, lum));
 
-  vec3 abysse  = vec3(0.016, 0.020, 0.140);
-  vec3 outremer = vec3(0.090, 0.130, 0.720);
-  vec3 iris    = vec3(0.330, 0.220, 0.880);
-  vec3 lavande = vec3(0.780, 0.760, 1.000);
+  /* Palette : le creux part d'un bleu de nuit presque noir, la masse est un
+     bleu roi franchement saturé, et la crête monte jusqu'au lavande blanc.
+     C'est l'ÉCART entre ces trois points qui fait le rendu — une palette
+     resserrée donne le dégradé mou qu'on avait. */
+  vec3 creux   = vec3(0.012, 0.016, 0.105);
+  vec3 roi     = vec3(0.115, 0.105, 0.930);
+  vec3 iris    = vec3(0.330, 0.250, 0.940);
+  vec3 lavande = vec3(0.760, 0.700, 1.000);
 
-  vec3 col = mix(abysse, outremer, smoothstep(0.18, 0.62, h));
-  col = mix(col, iris, smoothstep(0.48, 0.92, h));
+  vec3 col = mix(creux, roi, smoothstep(0.24, 0.60, h));
+  col = mix(col, iris, smoothstep(0.58, 0.88, h));
 
-  // L'arête éclairée. L'exposant élevé resserre le liseré lumineux le long du
-  // repli au lieu d'éclaircir toute la nappe.
-  col = mix(col, lavande, pow(lit, 5.0) * 0.85);
-  col += lavande * pow(lit, 14.0) * 0.30;
+  // L'arête éclairée : resserrée par un exposant élevé pour rester un liseré
+  // le long du pli, au lieu d'éclaircir toute la nappe.
+  // La crête est un LISERÉ, pas une plage : l'exposant la resserre le long du
+  // pli, et le mélange plafonné l'empêche de saturer en blanc pur.
+  col = mix(col, lavande, pow(lit, 3.2) * 0.62);
+  col += lavande * pow(lit, 9.0) * 0.22;
 
-  // Vignette douce, corrigée du rapport d'image pour ne pas s'ovaliser sur un
-  // écran large.
+  // Vignette douce, corrigée du rapport d'image.
   vec2 v = (uv - 0.5) * vec2(uRes.x / uRes.y, 1.0);
-  col *= smoothstep(1.05, 0.22, dot(v, v) * 1.5);
+  col *= smoothstep(1.05, 0.12, dot(v, v) * 1.55);
 
-  // Voile de lisibilité, plus léger qu'avant : la nappe est lisse, le texte
-  // tient dessus sans qu'on l'écrase.
-  col *= 0.74;
+  // Voile de lisibilité.
+  col *= 0.60;
 
   return col;
 }

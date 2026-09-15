@@ -14,13 +14,14 @@
 /* ===========================================================================
    FORGE — page d'attente
    ---------------------------------------------------------------------------
-   Le fond ET le bouton sont dessinés par un seul canvas WebGL, en arrière-plan.
-   Le bouton n'a donc pas un « effet verre » posé par-dessus : il EST le fond,
-   réfracté à travers son propre bord. C'est ce qui fait la différence entre un
-   backdrop-filter et le vrai liquid glass — la lumière se courbe au rebord.
+   Le fond est un dégradé de maillage animé, écrit en WebGL dans #bg. Le verre du formulaire est du CSS : `backdrop-filter` filtre pour de
+   vrai les pixels du canvas qui se trouve derrière, on n'imite donc pas la
+   réfraction, on la subit — ce qui est à la fois plus simple et plus juste.
 
-   Le <button> du DOM reste au-dessus, transparent, et ne porte que le texte et
-   le clic. Il garde donc son accessibilité clavier et son comportement natif.
+   Règle qui gouverne toutes les interactions : RIEN ne se déplace en suivant
+   la souris. Les seules réactions au survol sont lumineuses, jamais
+   géométriques. Un formulaire qui se dérobe sous le curseur est pénible à
+   viser, et l'effet « magnétique » vieillit mal.
    =========================================================================== */
 
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,24 +29,17 @@
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-behavior: smooth;
 }
 
 body {
-  /* Une seule courbe d'accélération pour toute la page : c'est ce qui fait
-     qu'un ensemble d'animations se lit comme un mouvement unique et non comme
-     une collection d'effets. */
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
   --ink: #ffffff;
-  --ink-2: rgba(255, 255, 255, 0.62);
-  --ink-3: rgba(255, 255, 255, 0.38);
+  --ink-2: rgba(255, 255, 255, 0.64);
+  --ink-3: rgba(255, 255, 255, 0.40);
 
-  --glass: rgba(255, 255, 255, 0.05);
-  --glass-hi: rgba(255, 255, 255, 0.08);
-  --glass-line: rgba(255, 255, 255, 0.14);
-  --glass-line-hi: rgba(255, 255, 255, 0.24);
+  --accent: #ff61f4;
+  --accent-2: #462fb6;
 
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
                "Segoe UI", system-ui, sans-serif;
@@ -53,38 +47,53 @@ body {
   color: var(--ink);
   line-height: 1.5;
   overflow-x: hidden;
-  min-height: 100vh;
 }
 
-/* ------------------------------------------------------------ fond animé */
+/* ---------------------------------------------------------------- le fond */
 
-#gl {
+#bg {
   position: fixed;
   inset: 0;
-  width: 100%;
-  height: 100%;
   z-index: 0;
-  display: block;
-  /* Le canvas ne reçoit aucun clic : tout passe au DOM au-dessus. */
   pointer-events: none;
+  /* Repli si le module ne charge pas ou si WebGL2 manque : la page garde une
+     ambiance plutôt que de tomber sur du noir plat. La classe .ready, posée
+     par le script une fois le shader monté, le fait disparaître. */
+  background:
+    radial-gradient(52% 44% at 28% 34%, rgba(70, 47, 182, 0.42), transparent 72%),
+    radial-gradient(46% 40% at 74% 62%, rgba(255, 97, 244, 0.26), transparent 72%),
+    #000;
+  transition: background-color 0.8s var(--ease);
 }
+#bg.ready { background: #000; }
 
-/* Filet de sécurité si WebGL n'est pas disponible : un dégradé fixe, sombre,
-   qui garde la page lisible plutôt que de la laisser sur du noir plat. */
-#fallback {
+/* Le canvas que ShaderMount insère dans #bg. */
+#bg canvas {
+  position: absolute;
+  inset: 0;
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+  /* Apparition en fondu : sans ça, la première image du shader claque. */
+  opacity: 0;
+  transition: opacity 1.4s var(--ease);
+}
+#bg.ready canvas { opacity: 1; }
+
+/* Voile de lisibilité. Un fond animé ne garantit pas de rester sombre là où le
+   texte se trouve ; ce plafond assure le contraste quoi que fasse le shader,
+   et fait exister le verre, qui lui est rehaussé. */
+#veil {
   position: fixed;
   inset: 0;
-  z-index: 0;
-  display: none;
+  z-index: 1;
+  pointer-events: none;
   background:
-    radial-gradient(60% 50% at 20% 30%, rgba(255, 122, 26, 0.20), transparent 70%),
-    radial-gradient(55% 45% at 80% 65%, rgba(40, 110, 255, 0.22), transparent 70%),
-    #000;
+    linear-gradient(180deg, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.30) 38%, rgba(0,0,0,0.58) 100%),
+    radial-gradient(70% 60% at 50% 40%, transparent 30%, rgba(0,0,0,0.45) 100%);
 }
-body.no-gl #fallback { display: block; }
-body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
 
-/* --------------------------------------------------- grilles de croix */
+/* ------------------------------------------------------- grilles de croix */
 
 .grid-container {
   position: fixed;
@@ -92,11 +101,8 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   width: 140px;
   height: 100vh;
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
   overflow: hidden;
-  /* Le parallaxe passe par cette variable, écrite par le script : une seule
-     propriété animée, donc une seule couche composée par le GPU. */
-  will-change: transform;
 }
 .grid-container.left  { left: 0; }
 .grid-container.right { right: 0; }
@@ -111,12 +117,11 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   position: absolute;
   width: 20px;
   height: 20px;
-  opacity: 0.12;
   color: #fff;
-  /* Les croix sont éclairées par une variable écrite en boucle rAF plutôt que
-     par une classe : pas de recalcul de style en cascade sur 80 éléments. */
-  opacity: calc(0.10 + var(--lit, 0) * 0.78);
-  filter: drop-shadow(0 0 calc(var(--lit, 0) * 14px) rgba(255, 255, 255, 0.55));
+  /* L'éclairage passe par une variable écrite en boucle plutôt que par une
+     classe : pas de recalcul de style en cascade sur quatre-vingts éléments. */
+  opacity: calc(0.085 + var(--lit, 0) * 0.62);
+  filter: drop-shadow(0 0 calc(var(--lit, 0) * 12px) rgba(255, 255, 255, 0.45));
 }
 
 .grid-container::after {
@@ -127,29 +132,44 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   background: linear-gradient(to bottom, transparent, #000);
 }
 
-/* ------------------------------------------------------------- colonne */
+/* --------------------------------------------- défilement adouci + colonne */
+
+/* Le contenu est translaté par le script vers une position de défilement
+   lissée ; #spacer ne sert qu'à donner sa hauteur réelle à la page pour que la
+   barre de défilement et la molette gardent leur comportement natif. */
+#scroll {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 3;
+  will-change: transform;
+}
+#spacer { pointer-events: none; }
+
+/* Sans adoucissement (mobile, préférence système), le contenu reprend le flux
+   normal et #spacer disparaît. */
+body.native-scroll #scroll { position: static; width: auto; }
+body.native-scroll #spacer { display: none; }
 
 .container {
-  position: relative;
-  z-index: 2;
   max-width: 600px;
   margin: 0 auto;
-  padding: 140px 24px 100px;
-  min-height: 100vh;
+  padding: 140px 24px 110px;
 }
 
-/* Entrée en cascade. L'ordre visuel suit l'ordre du document via --i, sans
-   qu'aucune règle ne répète la liste des éléments. */
+/* Entrée en cascade : l'ordre visuel suit l'ordre du document via --i. */
 .rise {
   opacity: 0;
-  transform: translateY(24px);
-  filter: blur(6px);
+  transform: translateY(26px);
+  filter: blur(7px);
   transition:
-    opacity 0.9s var(--ease) calc(var(--i, 0) * 80ms),
-    transform 0.9s var(--ease) calc(var(--i, 0) * 80ms),
-    filter 0.9s var(--ease) calc(var(--i, 0) * 80ms);
+    opacity 1s var(--ease) calc(var(--i, 0) * 90ms),
+    transform 1s var(--ease) calc(var(--i, 0) * 90ms),
+    filter 1s var(--ease) calc(var(--i, 0) * 90ms);
 }
 .rise.in { opacity: 1; transform: none; filter: none; }
+
+/* ------------------------------------------------------------------ texte */
 
 .logo {
   display: inline-flex;
@@ -162,13 +182,13 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
 }
 .logo .dot {
   width: 6px; height: 6px; border-radius: 50%;
-  background: #ff7a1a;
-  box-shadow: 0 0 12px rgba(255, 122, 26, 0.9);
-  animation: pulse 3s var(--ease) infinite;
+  background: var(--accent);
+  box-shadow: 0 0 14px rgba(255, 97, 244, 0.85);
+  animation: pulse 3.4s var(--ease) infinite;
 }
 @keyframes pulse {
-  0%, 100% { opacity: 1;   transform: scale(1); }
-  50%      { opacity: 0.45; transform: scale(0.82); }
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.42; transform: scale(0.8); }
 }
 
 .hero { margin-bottom: 56px; }
@@ -179,9 +199,7 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   letter-spacing: -0.035em;
   line-height: 1.06;
   margin-bottom: 22px;
-  /* Le dégradé de texte reste très discret : il donne du relief sans faire
-     « carte de vœux ». */
-  background: linear-gradient(180deg, #fff 30%, rgba(255, 255, 255, 0.72) 100%);
+  background: linear-gradient(180deg, #fff 28%, rgba(255, 255, 255, 0.70) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -194,84 +212,59 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   max-width: 470px;
 }
 
-/* -------------------------------------------------------------- cartes */
+/* ----------------------------------------------------------------- verre */
 
-.features {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 56px;
+/* La recette du verre, en une seule règle réutilisée. Trois couches font tout :
+     — backdrop-filter, qui filtre réellement le shader derrière ;
+     — une bordure claire, qui détoure la pièce sur un fond sombre ;
+     — un liseré interne en haut, le reflet qui lui donne son épaisseur.
+   C'est ce troisième point qu'on oublie d'habitude, et sans lui une carte en
+   « glassmorphism » reste un rectangle gris. */
+.glass {
+  position: relative;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.04);
 }
+
+.features { display: grid; gap: 10px; margin-bottom: 56px; }
 
 .feature {
-  position: relative;
   padding: 20px 22px;
   border-radius: 20px;
-  background: var(--glass);
-  border: 1px solid var(--glass-line);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.30),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  overflow: hidden;
+  /* Aucune transformation au survol : seule la lumière change. */
   transition:
-    transform 0.5s var(--ease),
-    background-color 0.5s var(--ease),
-    border-color 0.5s var(--ease),
-    box-shadow 0.5s var(--ease);
+    background-color 0.55s var(--ease),
+    border-color 0.55s var(--ease),
+    box-shadow 0.55s var(--ease);
 }
-
-/* La lueur suit le curseur À L'INTÉRIEUR de la carte : deux variables écrites
-   au survol, aucune autre carte n'est touchée. */
-.feature::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  opacity: 0;
-  transition: opacity 0.5s var(--ease);
-  background: radial-gradient(
-    240px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.10),
-    transparent 60%);
-}
-.feature:hover::before { opacity: 1; }
-
 .feature:hover {
-  transform: scale(1.02);
-  background: var(--glass-hi);
-  border-color: var(--glass-line-hi);
+  background: rgba(255, 255, 255, 0.085);
+  border-color: rgba(255, 255, 255, 0.24);
   box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    0 14px 44px rgba(0, 0, 0, 0.44),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .feature-title {
-  position: relative;
   font-size: 15px;
   font-weight: 550;
   margin-bottom: 5px;
   letter-spacing: -0.01em;
 }
-.feature-desc {
-  position: relative;
-  font-size: 14px;
-  color: var(--ink-3);
-  line-height: 1.45;
-}
+.feature-desc { font-size: 14px; color: var(--ink-3); line-height: 1.45; }
 
-/* ---------------------------------------------------------- formulaire */
+/* ------------------------------------------------------------ formulaire */
 
 .form-section {
   padding: 26px;
   border-radius: 24px;
-  background: var(--glass);
-  border: 1px solid var(--glass-line);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
   margin-bottom: 56px;
 }
 
@@ -289,26 +282,26 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
 .form-input {
   width: 100%;
   padding: 14px 16px;
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.035);
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 14px;
   font-size: 15px;
   color: var(--ink);
   font-family: inherit;
   transition:
-    border-color 0.4s var(--ease),
-    background-color 0.4s var(--ease),
-    box-shadow 0.4s var(--ease);
+    border-color 0.45s var(--ease),
+    background-color 0.45s var(--ease),
+    box-shadow 0.45s var(--ease);
 }
-.form-input::placeholder { color: rgba(255, 255, 255, 0.30); }
+.form-input::placeholder { color: rgba(255, 255, 255, 0.32); }
 .form-input:focus {
   outline: none;
   background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.26);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.28);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.045);
 }
 .form-input.err {
-  border-color: rgba(255, 92, 92, 0.65);
+  border-color: rgba(255, 97, 130, 0.7);
   animation: shake 0.42s var(--ease);
 }
 @keyframes shake {
@@ -318,16 +311,14 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   40%, 60% { transform: translateX(5px); }
 }
 
-/* Le bouton : sa surface est peinte par le shader, pas par le CSS. Il ne porte
-   donc aucun fond — seulement le texte, le rebord et le comportement. */
+/* Le bouton : la même recette de verre, poussée d'un cran. Il est FIXE — ni
+   aimantation, ni déplacement, ni mise à l'échelle au survol. */
 .submit-btn {
   position: relative;
   width: 100%;
   margin-top: 6px;
-  padding: 16px 18px;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 17px 18px;
   border-radius: 18px;
-  background: transparent;
   font-size: 15.5px;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -336,47 +327,61 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   cursor: pointer;
   overflow: hidden;
   isolation: isolate;
-  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.45);
-  /* L'aimantation est écrite par le script dans --mxp/--myp ; le ressort est
-     ici, pour que le retour au repos soit élastique et non linéaire. */
-  transform: translate3d(var(--mxp, 0px), var(--myp, 0px), 0) scale(var(--sc, 1));
+
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(18px) saturate(200%) brightness(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(200%) brightness(1.18);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 22px rgba(255, 255, 255, 0.07);
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.5);
   transition:
-    transform 0.55s var(--ease-spring),
-    border-color 0.4s var(--ease),
-    box-shadow 0.4s var(--ease);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    background-color 0.45s var(--ease),
+    border-color 0.45s var(--ease),
+    box-shadow 0.45s var(--ease);
 }
-.submit-btn:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.40);
-  box-shadow:
-    0 14px 44px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.28);
-}
-.submit-btn:active:not(:disabled) { --sc: 0.985; }
-.submit-btn:disabled { opacity: 0.55; cursor: progress; }
 
-/* L'onde au clic part du point cliqué, pas du centre : c'est ce détail qui
-   fait que le bouton répond au doigt plutôt qu'à l'événement. */
-.ripple {
+/* Le balayage de lumière : un reflet qui traverse lentement la pastille, en
+   boucle. C'est ce qui donne l'impression de métal liquide sans dépendre du
+   curseur — il vit tout seul, même quand personne ne touche la souris. */
+.submit-btn::after {
+  content: '';
   position: absolute;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.34);
-  transform: translate(-50%, -50%) scale(0);
-  animation: ripple 0.62s var(--ease) forwards;
+  inset: 0;
+  border-radius: inherit;
   pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.16) 45%,
+    rgba(255, 255, 255, 0.30) 50%,
+    rgba(255, 255, 255, 0.16) 55%,
+    transparent 70%);
+  background-size: 300% 100%;
+  animation: sheen 7s var(--ease) infinite;
 }
-@keyframes ripple {
-  to { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+@keyframes sheen {
+  0%, 100% { background-position: 160% 0; }
+  55%      { background-position: -60% 0; }
 }
 
-.form-note {
-  font-size: 13px;
-  color: var(--ink-3);
-  margin-top: 14px;
+.submit-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.145);
+  border-color: rgba(255, 255, 255, 0.42);
+  box-shadow:
+    0 14px 46px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 0 26px rgba(255, 255, 255, 0.12);
 }
-.form-note.err { color: #ff8a8a; }
+.submit-btn:disabled { opacity: 0.6; cursor: progress; }
+.submit-btn:disabled::after { animation-duration: 1.6s; }
+
+.form-note { font-size: 13px; color: var(--ink-3); margin-top: 14px; }
+.form-note.err { color: #ff8aa8; }
 
 .success-message {
   display: none;
@@ -384,28 +389,23 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   gap: 12px;
   padding: 22px;
   border-radius: 20px;
-  background: var(--glass);
-  border: 1px solid var(--glass-line);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.34);
   font-size: 15px;
   margin-bottom: 56px;
 }
 .success-message.show {
   display: flex;
-  animation: rise-in 0.7s var(--ease) both;
+  animation: rise-in 0.8s var(--ease) both;
 }
 @keyframes rise-in {
-  from { opacity: 0; transform: translateY(16px); filter: blur(6px); }
+  from { opacity: 0; transform: translateY(16px); filter: blur(7px); }
   to   { opacity: 1; transform: none; filter: none; }
 }
 .success-message .check {
   display: grid; place-items: center;
   width: 30px; height: 30px; flex: 0 0 30px;
   border-radius: 50%;
-  background: rgba(74, 222, 128, 0.14);
-  color: #4ade80;
+  background: rgba(255, 97, 244, 0.16);
+  color: var(--accent);
 }
 
 .footer {
@@ -415,50 +415,30 @@ body.no-gl .submit-btn { background: rgba(255, 255, 255, 0.10); }
   color: var(--ink-3);
 }
 
-/* --------------------------------------------------- lueur au curseur */
-
-#trail {
-  position: fixed;
-  top: 0; left: 0;
-  width: 460px; height: 460px;
-  margin: -230px 0 0 -230px;
-  z-index: 1;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.6s var(--ease);
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.055), transparent 62%);
-  transform: translate3d(var(--tx, 50vw), var(--ty, 50vh), 0);
-}
-body.pointer #trail { opacity: 1; }
-
-/* ---------------------------------------------------------- responsive */
+/* ----------------------------------------------------------- responsive */
 
 @media (max-width: 900px) { .grid-container { width: 96px; } }
 
 @media (max-width: 640px) {
-  .container { padding: 96px 20px 72px; }
+  .container { padding: 96px 20px 80px; }
   .logo { margin-bottom: 64px; }
   .form-section { padding: 20px; border-radius: 22px; }
 }
 
-@media (max-width: 520px) {
-  .grid-container { display: none; }
-  #trail { display: none; }
-}
+@media (max-width: 520px) { .grid-container { display: none; } }
 
 /* ------------------------------------------------------ confort visuel */
 
 @media (prefers-reduced-motion: reduce) {
-  html { scroll-behavior: auto; }
   .rise { opacity: 1; transform: none; filter: none; transition: none; }
-  .logo .dot { animation: none; }
-  .submit-btn, .feature, .form-input { transition: none; }
-  .ripple { display: none; }
-  #trail { display: none; }
+  .logo .dot, .submit-btn::after { animation: none; }
+  .submit-btn::after { opacity: 0; }
+  .feature, .form-input, .submit-btn { transition: none; }
+  #bg canvas { transition: none; }
 }
 
 :focus-visible {
-  outline: 2px solid rgba(255, 255, 255, 0.75);
+  outline: 2px solid rgba(255, 255, 255, 0.8);
   outline-offset: 3px;
   border-radius: 8px;
 }
@@ -466,99 +446,91 @@ body.pointer #trail { opacity: 1; }
 </head>
 <body>
 
-<canvas id="gl" aria-hidden="true"></canvas>
-<div id="fallback" aria-hidden="true"></div>
-<div id="trail" aria-hidden="true"></div>
+<div id="bg" aria-hidden="true"></div>
+<div id="veil" aria-hidden="true"></div>
 
 <div class="grid-container left"  aria-hidden="true"><div class="grid-inner" id="gridLeft"></div></div>
 <div class="grid-container right" aria-hidden="true"><div class="grid-inner" id="gridRight"></div></div>
 
-<div class="container">
+<div id="scroll">
+  <div class="container">
 
-  <div class="logo rise" style="--i:0">
-    <span class="dot" aria-hidden="true"></span>
-    FORGE
-  </div>
-
-  <div class="hero">
-    <h1 class="rise" style="--i:1">Batch creative automation for ecommerce</h1>
-    <p class="rise" style="--i:2">
-      Turn raw footage into ready-to-publish ads in minutes. Derushing, editing,
-      and creative generation in one pass.
-    </p>
-  </div>
-
-  <div class="features">
-    <div class="feature rise" style="--i:3">
-      <div class="feature-title">Batch processing</div>
-      <div class="feature-desc">12 ad variants from one brief, not 12 manual edits.</div>
-    </div>
-    <div class="feature rise" style="--i:4">
-      <div class="feature-title">Auto derushing</div>
-      <div class="feature-desc">Silence, filler, and retakes removed automatically.</div>
-    </div>
-    <div class="feature rise" style="--i:5">
-      <div class="feature-title">Static + video</div>
-      <div class="feature-desc">Same input, multiple formats. Export what you need.</div>
-    </div>
-  </div>
-
-  <form class="form-section rise" style="--i:6" id="waitlistForm" novalidate>
-    <div class="form-title">Get early access</div>
-
-    <div class="form-group">
-      <input type="email" placeholder="Email" class="form-input" id="emailInput"
-             autocomplete="email" aria-label="Email" required />
+    <div class="logo rise" style="--i:0">
+      <span class="dot" aria-hidden="true"></span>
+      FORGE
     </div>
 
-    <div class="form-group">
-      <input type="tel" placeholder="Phone" class="form-input" id="phoneInput"
-             autocomplete="tel" aria-label="Phone number" required />
+    <div class="hero">
+      <h1 class="rise" style="--i:1">Batch creative automation for ecommerce</h1>
+      <p class="rise" style="--i:2">
+        Turn raw footage into ready-to-publish ads in minutes. Derushing, editing,
+        and creative generation in one pass.
+      </p>
     </div>
 
-    <button type="submit" class="submit-btn" id="submitBtn">Join waitlist</button>
+    <div class="features">
+      <div class="feature glass rise" style="--i:3">
+        <div class="feature-title">Batch processing</div>
+        <div class="feature-desc">12 ad variants from one brief, not 12 manual edits.</div>
+      </div>
+      <div class="feature glass rise" style="--i:4">
+        <div class="feature-title">Auto derushing</div>
+        <div class="feature-desc">Silence, filler, and retakes removed automatically.</div>
+      </div>
+      <div class="feature glass rise" style="--i:5">
+        <div class="feature-title">Static + video</div>
+        <div class="feature-desc">Same input, multiple formats. Export what you need.</div>
+      </div>
+    </div>
 
-    <div class="form-note" id="formNote">No spam. Unsubscribe anytime.</div>
-  </form>
+    <form class="form-section glass rise" style="--i:6" id="waitlistForm" novalidate>
+      <div class="form-title">Get early access</div>
 
-  <div class="success-message" id="successMessage" role="status">
-    <span class="check" aria-hidden="true">
-      <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4">
-        <path d="m4.5 10.5 3.6 3.6L15.5 6.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    </span>
-    You're on the list. We'll reach out soon.
+      <div class="form-group">
+        <input type="email" placeholder="Email" class="form-input" id="emailInput"
+               autocomplete="email" aria-label="Email" required />
+      </div>
+
+      <div class="form-group">
+        <input type="tel" placeholder="Phone" class="form-input" id="phoneInput"
+               autocomplete="tel" aria-label="Phone number" required />
+      </div>
+
+      <button type="submit" class="submit-btn" id="submitBtn">Join waitlist</button>
+
+      <div class="form-note" id="formNote">No spam. Unsubscribe anytime.</div>
+    </form>
+
+    <div class="success-message glass" id="successMessage" role="status">
+      <span class="check" aria-hidden="true">
+        <svg viewBox="0 0 20 20" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.4">
+          <path d="m4.5 10.5 3.6 3.6L15.5 6.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      You're on the list. We'll reach out soon.
+    </div>
+
+    <div class="footer rise" style="--i:7">
+      Built for agencies, creators, and ecommerce brands.
+    </div>
+
   </div>
-
-  <div class="footer rise" style="--i:7">
-    Built for agencies, creators, and ecommerce brands.
-  </div>
-
 </div>
 
-<!-- ======================================================================= -->
+<div id="spacer" aria-hidden="true"></div>
 
-<script id="vert" type="x-shader/x-vertex">
-attribute vec2 position;
-void main() { gl_Position = vec4(position, 0.0, 1.0); }
-</script>
+<!-- ===================================================================== -->
 
-<script id="frag" type="x-shader/x-fragment">
+<script id="bgFrag" type="x-shader/x-fragment">
 precision highp float;
 
-uniform vec2  uRes;      // taille du canvas, en pixels physiques
-uniform float uTime;     // secondes depuis le chargement
-uniform vec4  uBtn;      // xy = centre du bouton, zw = demi-taille (pixels, origine en bas à gauche)
-uniform float uRadius;   // rayon des coins du bouton, en pixels
-uniform float uGlass;    // 0 = pas de verre (bouton hors écran), 1 = plein effet
-uniform vec2  uPointer;  // position du curseur, pour la respiration du fond
+uniform vec2  uRes;
+uniform float uTime;
 
-/* --------------------------------------------------------------- bruit */
-/* Un bruit de valeur classique : moins beau qu'un simplex, mais deux fois
-   moins cher, et la déformation de domaine plus bas masque complètement la
-   différence. Sur une page qui doit tourner à 60 i/s sur un portable
-   intégré, c'est le bon compromis. */
-
+/* --------------------------------------------------------------- matière */
+/* Deux octaves suffisent : la déformation appliquée plus bas est de faible
+   amplitude, une pile plus profonde n'apporterait rien de visible et coûterait
+   le double sur un GPU intégré. */
 float hash(vec2 p) {
   p = fract(p * vec2(123.34, 456.21));
   p += dot(p, p + 45.32);
@@ -566,205 +538,113 @@ float hash(vec2 p) {
 }
 
 float noise(vec2 p) {
-  vec2 i = floor(p);
-  vec2 f = fract(p);
-  vec2 u = f * f * (3.0 - 2.0 * f);          // lissage cubique
-  return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
              mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
 }
 
 float fbm(vec2 p) {
-  float v = 0.0, a = 0.5;
-  for (int i = 0; i < 5; i++) {
-    v += a * noise(p);
-    p = p * 2.02 + vec2(1.7, 9.2);           // la rotation évite les alignements
-    a *= 0.5;
-  }
-  return v;
+  return 0.62 * noise(p) + 0.31 * noise(p * 2.03 + 7.1);
 }
 
-/* ----------------------------------------------------------------- fond */
-/* Déformation de domaine : on bruite les coordonnées avant de les bruiter à
-   nouveau. C'est ce qui transforme un nuage informe en écoulement — les
-   bandes s'étirent et se replient comme de l'encre dans l'eau. */
-
-vec3 background(vec2 uv) {
-  float t = uTime * 0.045;
-
-  vec2 p = uv * 1.5;
-  p.x *= uRes.x / uRes.y;                    // on travaille en repère carré
-
-  // Le curseur tire très légèrement l'écoulement : imperceptible à l'arrêt,
-  // vivant quand la souris bouge.
-  p += (uPointer - 0.5) * 0.12;
-
-  vec2 q = vec2(fbm(p + t), fbm(p + vec2(5.2, 1.3) - t * 0.7));
-  vec2 r = vec2(fbm(p + 3.4 * q + vec2(1.7, 9.2) + t * 1.4),
-                fbm(p + 3.4 * q + vec2(8.3, 2.8) + t * 1.1));
-  float f = fbm(p + 3.2 * r);
-
-  // Palette : noir profond, bleu électrique, violet, et une braise orange —
-  // les trois familles de couleur des références, posées sur du vrai noir.
-  vec3 deep   = vec3(0.016, 0.020, 0.043);
-  vec3 blue   = vec3(0.055, 0.180, 0.640);
-  vec3 violet = vec3(0.250, 0.110, 0.560);
-  vec3 ember  = vec3(1.000, 0.420, 0.075);
-
-  vec3 col = mix(deep, blue,   smoothstep(0.25, 0.80, f));
-  col = mix(col, violet, smoothstep(0.35, 0.95, r.y) * 0.75);
-  col = mix(col, ember,  smoothstep(0.55, 1.05, q.x * 1.25 + f * 0.45) * 0.80);
-
-  // Les braises ne s'allument que là où l'écoulement se replie : sans ça,
-  // l'orange bave partout et l'image devient une bouillie chaude.
-  col += ember * pow(smoothstep(0.62, 1.0, f), 3.0) * 0.30;
-
-  // Vignette : les bords reviennent au noir pur, pour que la page reste noire.
-  vec2 d = uv - 0.5;
-  float vig = smoothstep(0.92, 0.18, dot(d, d) * 2.35);
-  col *= vig;
-
-  // Voile de lisibilité. Un fond animé ne peut pas garantir qu'il restera
-  // sombre là où le texte se trouve : sans ce plafond, le titre blanc se perd
-  // dans les zones claires de l'écoulement. On l'applique ICI, donc le verre
-  // du bouton — qui rehausse ce qu'il réfracte — ressort naturellement plus
-  // clair que ce qui l'entoure, exactement comme du vrai verre éclairé.
-  col *= 0.56;
-
-  // La colonne de texte occupe la moitié haute : on y assombrit un peu plus.
-  col *= mix(0.78, 1.0, smoothstep(0.15, 0.85, 1.0 - uv.y));
-
-  return col;
-}
-
-/* ------------------------------------------------------------- le verre */
-
-/* Distance signée à un rectangle aux coins arrondis. Négative à l'intérieur,
-   nulle sur le bord, positive dehors. */
-float sdRoundBox(vec2 p, vec2 b, float r) {
-  vec2 q = abs(p) - b + r;
-  return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
+/* Un pôle de couleur : une position qui dérive lentement sur une figure de
+   Lissajous. Comme les deux fréquences sont incommensurables, la trajectoire
+   ne se referme jamais — le fond ne se répète donc jamais à l'identique, ce
+   qu'un cycle trop court trahit immédiatement. */
+vec2 pole(float a, float b, float px, float py, float t) {
+  return vec2(px + 0.26 * sin(t * a), py + 0.24 * cos(t * b));
 }
 
 void main() {
-  vec2 frag = gl_FragCoord.xy;
-  vec2 uv = frag / uRes;
+  vec2 uv = gl_FragCoord.xy / uRes;
 
-  vec3 col = background(uv);
+  // Repère carré, sinon les pôles s'ovalisent sur un écran large.
+  vec2 p = uv;
+  p.x *= uRes.x / uRes.y;
+  float ar = uRes.x / uRes.y;
 
-  if (uGlass > 0.001) {
-    vec2 p = frag - uBtn.xy;
-    float sd = sdRoundBox(p, uBtn.zw, uRadius);
+  float t = uTime;
 
-    // Masque antialiasé : une pastille nette, sans escalier sur les coins.
-    float inside = 1.0 - smoothstep(-1.2, 1.2, sd);
+  // Déformation de domaine, volontairement faible : c'est ce qui rend les
+  // frontières organiques au lieu de concentriques, sans donner le « nuage
+  // qui bouge » qu'on remarque.
+  vec2 w = vec2(fbm(p * 1.6 + t * 0.06), fbm(p * 1.6 + 4.7 - t * 0.05));
+  p += (w - 0.5) * 0.30;
 
-    if (inside > 0.001) {
-      // Normale du bord, par différences finies sur la distance signée.
-      vec2 e = vec2(1.0, 0.0);
-      vec2 n = normalize(vec2(
-        sdRoundBox(p + e.xy, uBtn.zw, uRadius) - sdRoundBox(p - e.xy, uBtn.zw, uRadius),
-        sdRoundBox(p + e.yx, uBtn.zw, uRadius) - sdRoundBox(p - e.yx, uBtn.zw, uRadius)) + 1e-6);
+  vec2 p0 = pole(0.121, 0.093, 0.28 * ar, 0.30, t);
+  vec2 p1 = pole(0.077, 0.134, 0.74 * ar, 0.62, t);
+  vec2 p2 = pole(0.104, 0.062, 0.52 * ar, 0.86, t);
 
-      // La réfraction n'existe qu'au rebord et s'éteint vers le centre : c'est
-      // exactement le comportement d'une lentille épaisse, et c'est ce que
-      // l'œil reconnaît comme « du verre » plutôt que comme « un flou ».
-      float thickness = min(uBtn.z, uBtn.w) * 0.95;
-      float rim = pow(1.0 - clamp(-sd / thickness, 0.0, 1.0), 1.9);
-      vec2 bend = n * rim * min(uBtn.w, 30.0) * 2.1;
+  // Pondération en 1/d² : la somme normalisée donne un dégradé de maillage,
+  // continu partout, sans couture entre les pôles.
+  float w0 = 1.0 / (dot(p - p0, p - p0) + 0.055);
+  float w1 = 1.0 / (dot(p - p1, p - p1) + 0.075);
+  float w2 = 1.0 / (dot(p - p2, p - p2) + 0.095);
+  float sum = w0 + w1 + w2;
 
-      // Dépoli : huit prises réparties en anneau. Le flou n'a pas besoin
-      // d'être exact, il a besoin d'être doux — huit suffisent, et on reste
-      // dans le budget puisque seul le bouton entre ici.
-      vec3 glass = vec3(0.0);
-      const int TAPS = 8;
-      for (int i = 0; i < TAPS; i++) {
-        float a = float(i) * 0.7853981634;          // 2π / 8
-        vec2 off = vec2(cos(a), sin(a)) * 5.0;
-        glass += background((frag + bend + off) / uRes);
-      }
-      glass /= float(TAPS);
+  vec3 violet = vec3(0.275, 0.184, 0.714);   // #462fb6
+  vec3 rose   = vec3(1.000, 0.380, 0.957);   // #ff61f4
+  vec3 encre  = vec3(0.055, 0.031, 0.141);
 
-      // Un verre pur assombrirait le texte : on relève la luminance et on
-      // désature un peu, comme du verre dépoli éclairé par l'arrière.
-      glass = mix(glass, vec3(dot(glass, vec3(0.299, 0.587, 0.114))), 0.20);
-      glass = glass * 1.55 + 0.055;
+  vec3 col = (violet * w0 + rose * w1 + encre * w2) / sum;
 
-      // Spéculaire du rebord : une lumière venue d'en haut à gauche, plus un
-      // liseré uniforme très fin. C'est ce liseré qui « détoure » la pastille
-      // sur un fond sombre et la fait exister.
-      float edge = 1.0 - smoothstep(0.0, 1.8, abs(sd));
-      float lit = clamp(dot(n, normalize(vec2(-0.40, 0.92))), 0.0, 1.0);
-      glass += vec3(edge * (0.22 + lit * 0.85));
+  // La couleur ne vit que par plaques : ailleurs on revient au noir. Sans ce
+  // masque, un dégradé de maillage couvre tout l'écran et ressemble à un fond
+  // d'écran de téléphone, pas au fond d'un produit.
+  float plaque = smoothstep(0.30, 0.95, (w0 + w1) / sum);
+  col *= plaque * 0.62;
 
-      // Le « bourrelet » interne : une seconde bande, plus large et plus douce,
-      // juste en retrait du bord. C'est elle qui donne l'épaisseur — une
-      // pastille qui n'aurait que son liseré resterait une découpe plate.
-      float bevel = smoothstep(7.0, 0.0, abs(sd + 3.5));
-      glass += vec3(bevel * lit * 0.28);
+  // Vignette : les bords rejoignent le noir pur.
+  vec2 d = uv - 0.5;
+  col *= smoothstep(0.95, 0.15, dot(d, d) * 2.1);
 
-      // Gradient haut→bas dans la masse, très léger.
-      glass += vec3(smoothstep(-uBtn.w, uBtn.w, p.y) * 0.07);
+  // Grain argentique. Il fait plus pour l'impression de qualité que n'importe
+  // quel réglage de couleur : il casse les anneaux de quantification des
+  // dégradés sombres, que le 8 bits laisse apparaître sans lui.
+  float g = hash(gl_FragCoord.xy + fract(t) * 137.0) - 0.5;
+  col += g * 0.028;
 
-      col = mix(col, glass, inside * uGlass);
-    }
-  }
-
-  // Tramage : un huitième de niveau de bruit suffit à casser les anneaux de
-  // quantification qui apparaissent sur les dégradés sombres en 8 bits.
-  col += (hash(frag + uTime) - 0.5) / 255.0;
-
-  gl_FragColor = vec4(col, 1.0);
+  gl_FragColor = vec4(max(col, 0.0), 1.0);
 }
 </script>
 
 <script>
+/* Le fond, isolé : s'il échoue (WebGL absent, contexte refusé), le reste de la
+   page n'en sait rien et le dégradé de repli de #bg reste affiché. */
 (function () {
   'use strict';
+  try {
+    var host = document.getElementById('bg');
+    var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  /* =======================================================================
-     CONFIGURATION SUPABASE
-     La clé « anon » est publique par conception : elle vit dans le navigateur
-     de chaque visiteur. Ce sont les politiques RLS qui protègent la table,
-     pas le secret de la clé.
-     ======================================================================= */
-  var SUPABASE_URL      = 'https://oxtmgahxvwoyzwhieqbi.supabase.co';
-  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dG1nYWh4dndveXp3aGllcWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODAxMDQsImV4cCI6MjEwNTA1NjEwNH0.8zKC9fDej4IyS4xKHO6qKA1y4k75YfgTxJl85tlgok8';
-  var TABLE             = 'waitlist_emails';
-
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* =======================================================================
-     1. LE FOND ET LE VERRE — un seul canvas WebGL
-     ======================================================================= */
-  (function initGL() {
-    var canvas = document.getElementById('gl');
+    var canvas = document.createElement('canvas');
+    host.appendChild(canvas);
     var gl = canvas.getContext('webgl', { antialias: false, alpha: false, depth: false });
-
-    if (!gl) { document.body.classList.add('no-gl'); return; }
+    if (!gl) return;
 
     function compile(type, src) {
       var s = gl.createShader(type);
       gl.shaderSource(s, src);
       gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
-        console.error('shader:', gl.getShaderInfoLog(s));
-        gl.deleteShader(s);
+        console.warn('shader:', gl.getShaderInfoLog(s));
         return null;
       }
       return s;
     }
 
-    var vs = compile(gl.VERTEX_SHADER,   document.getElementById('vert').textContent);
-    var fs = compile(gl.FRAGMENT_SHADER, document.getElementById('frag').textContent);
-    if (!vs || !fs) { document.body.classList.add('no-gl'); return; }
+    var vs = compile(gl.VERTEX_SHADER,
+      'attribute vec2 position;void main(){gl_Position=vec4(position,0.0,1.0);}');
+    var fs = compile(gl.FRAGMENT_SHADER, document.getElementById('bgFrag').textContent);
+    if (!vs || !fs) return;
 
     var prog = gl.createProgram();
     gl.attachShader(prog, vs);
     gl.attachShader(prog, fs);
     gl.linkProgram(prog);
     if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      console.error('link:', gl.getProgramInfoLog(prog));
-      document.body.classList.add('no-gl');
+      console.warn('link:', gl.getProgramInfoLog(prog));
       return;
     }
     gl.useProgram(prog);
@@ -776,96 +656,103 @@ void main() {
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 
-    var U = {
-      res:     gl.getUniformLocation(prog, 'uRes'),
-      time:    gl.getUniformLocation(prog, 'uTime'),
-      btn:     gl.getUniformLocation(prog, 'uBtn'),
-      radius:  gl.getUniformLocation(prog, 'uRadius'),
-      glass:   gl.getUniformLocation(prog, 'uGlass'),
-      pointer: gl.getUniformLocation(prog, 'uPointer')
-    };
+    var uRes = gl.getUniformLocation(prog, 'uRes');
+    var uTime = gl.getUniformLocation(prog, 'uTime');
 
-    // Le fbm coûte cher par pixel : on plafonne la densité à 1,5 plutôt que de
-    // suivre un écran Retina à 3. La différence est invisible sur un dégradé
-    // flou, le gain de performance ne l'est pas.
-    var dpr = 1;
+    // Densité plafonnée : le fond est flou, personne ne verra la différence
+    // entre 1,25x et 3x, mais le GPU intégré, lui, la sentira.
     function resize() {
-      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+      var dpr = Math.min(window.devicePixelRatio || 1, 1.25);
       canvas.width  = Math.floor(innerWidth  * dpr);
       canvas.height = Math.floor(innerHeight * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
-      measureButton();
     }
-
-    /* Le bouton ne suit PAS le curseur : sa lentille est ancrée sur son
-       rectangle réel, relu au défilement et au redimensionnement. */
-    var btn = document.getElementById('submitBtn');
-    var rect = { x: 0, y: 0, hw: 0, hh: 0, r: 18, on: 0 };
-
-    function measureButton() {
-      if (!btn.offsetParent && btn.offsetWidth === 0) { rect.on = 0; return; }
-      var b = btn.getBoundingClientRect();
-      if (b.width === 0) { rect.on = 0; return; }
-      // WebGL a son origine en bas à gauche, le DOM en haut à gauche.
-      rect.x  = (b.left + b.width  / 2) * dpr;
-      rect.y  = (innerHeight - (b.top + b.height / 2)) * dpr;
-      rect.hw = (b.width  / 2) * dpr;
-      rect.hh = (b.height / 2) * dpr;
-      rect.r  = Math.min(18 * dpr, rect.hh);
-      // Hors de l'écran, on éteint la lentille : autant de pixels épargnés.
-      rect.on = (b.bottom > -40 && b.top < innerHeight + 40) ? 1 : 0;
-    }
-
-    var pointer = { x: 0.5, y: 0.5 };
-    addEventListener('pointermove', function (e) {
-      pointer.x = e.clientX / innerWidth;
-      pointer.y = 1 - e.clientY / innerHeight;
-    }, { passive: true });
-
     addEventListener('resize', resize);
-
     resize();
 
+    host.classList.add('ready');
+
     var t0 = performance.now();
+    var hidden = false;
+    document.addEventListener('visibilitychange', function () { hidden = document.hidden; });
+
     (function frame() {
-      var t = (performance.now() - t0) / 1000;
-
-      // La position du bouton est relue à CHAQUE image, et non sur l'événement
-      // de défilement. Le navigateur fait défiler la page sur son fil de
-      // composition ; une mesure déclenchée par l'événement arriverait une
-      // image en retard et on verrait la pastille de verre glisser derrière le
-      // bouton pendant les défilements par inertie. Un getBoundingClientRect
-      // par image ne coûte rien tant qu'on n'écrit pas la mise en page entre
-      // deux lectures — ce que cette boucle ne fait jamais.
-      measureButton();
-
-      // Mouvement figé si l'utilisateur a demandé moins d'animations : on garde
-      // l'image, on retire le temps.
-      gl.uniform1f(U.time, reduced ? 12.0 : t);
-      gl.uniform2f(U.res, canvas.width, canvas.height);
-      gl.uniform4f(U.btn, rect.x, rect.y, rect.hw, rect.hh);
-      gl.uniform1f(U.radius, rect.r);
-      gl.uniform1f(U.glass, rect.on);
-      gl.uniform2f(U.pointer, pointer.x, pointer.y);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
       requestAnimationFrame(frame);
+      // Onglet caché : on rend la main au système plutôt que de chauffer pour
+      // des pixels que personne ne regarde.
+      if (hidden) return;
+      // Temps très ralenti. Le fond doit respirer, pas attirer l'oeil : à
+      // pleine vitesse on regarde le fond au lieu du formulaire.
+      var t = reduced ? 600.0 : 600.0 + (performance.now() - t0) / 1000 * 0.42;
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, t);
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     })();
-  })();
+  } catch (e) {
+    console.warn('Fond anime indisponible :', e);
+  }
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
 
   /* =======================================================================
-     2. LES GRILLES DE CROIX — parallaxe + éclairage au curseur
+     CONFIGURATION SUPABASE
+     La clé « anon » est publique par conception : elle vit dans le navigateur
+     de chaque visiteur. Ce sont les politiques RLS qui protègent la table.
      ======================================================================= */
-  var crosses = [];
+  var SUPABASE_URL      = 'https://oxtmgahxvwoyzwhieqbi.supabase.co';
+  var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im94dG1nYWh4dndveXp3aGllcWJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0ODAxMDQsImV4cCI6MjEwNTA1NjEwNH0.8zKC9fDej4IyS4xKHO6qKA1y4k75YfgTxJl85tlgok8';
+  var TABLE             = 'waitlist_emails';
 
-  (function initGrids() {
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // Un écran tactile a déjà son inertie native, bien meilleure que tout ce
+  // qu'on peut écrire : on ne la remplace pas.
+  var coarse  = matchMedia('(pointer: coarse)').matches;
+  var smooth  = !reduced && !coarse;
+
+  /* =======================================================================
+     1. DÉFILEMENT ADOUCI
+     Le défilement natif est conservé — barre, molette, clavier, ancres — et
+     seul le CONTENU rattrape la position avec du retard. C'est ce qui évite
+     les pièges du détournement de molette : le navigateur reste maître de la
+     position, on ne fait que la lisser à l'affichage.
+     ======================================================================= */
+  var scroller = document.getElementById('scroll');
+  var spacer   = document.getElementById('spacer');
+  var smoothY  = 0;
+
+  if (!smooth) {
+    document.body.classList.add('native-scroll');
+  } else {
+    var syncHeight = function () {
+      spacer.style.height = scroller.getBoundingClientRect().height + 'px';
+    };
+    syncHeight();
+    addEventListener('resize', syncHeight);
+    // Les polices arrivent après le premier rendu et changent la hauteur.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncHeight);
+    // Le formulaire disparaît au succès : la page raccourcit.
+    new MutationObserver(syncHeight).observe(scroller, { attributes: true, childList: true, subtree: true });
+    smoothY = scrollY;
+  }
+
+  /* =======================================================================
+     2. LES GRILLES DE CROIX
+     ======================================================================= */
+  var cache = [];
+
+  (function buildGrids() {
     var svg = '<svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">' +
               '<path d="M10 0V20M0 10H20" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>';
     var spacing = 60;
-    // De quoi couvrir la page entière plus la marge que mange le parallaxe.
-    var rows = Math.ceil((innerHeight * 1.4) / spacing) + 3;
+    var rows = Math.ceil((innerHeight * 1.5) / spacing) + 3;
 
     ['gridLeft', 'gridRight'].forEach(function (id) {
       var host = document.getElementById(id);
+      if (!host) return;
       var frag = document.createDocumentFragment();
       for (var r = 0; r < rows; r++) {
         for (var c = 0; c < 2; c++) {
@@ -880,84 +767,79 @@ void main() {
       host.appendChild(frag);
     });
 
-    crosses = [].slice.call(document.querySelectorAll('.grid-cross'));
+    cache = [].slice.call(document.querySelectorAll('.grid-cross')).map(function (el) {
+      return { el: el, x: 0, y: 0, lit: 0 };
+    });
   })();
 
-  (function initGridMotion() {
-    if (reduced || !crosses.length) return;
+  var inners = [].slice.call(document.querySelectorAll('.grid-inner'));
+  var mouse = { x: -9999, y: -9999 };
+  var par = 0;
 
-    var containers = [].slice.call(document.querySelectorAll('.grid-inner'));
-    var mouse = { x: -9999, y: -9999 };
-    var RADIUS = 170;
+  function remeasureCrosses() {
+    // Mesurée une fois : les croix ne bougent ensuite que par translation,
+    // donc leur position de départ ne change pas.
+    cache.forEach(function (c) {
+      var b = c.el.getBoundingClientRect();
+      c.x = b.left + b.width / 2;
+      c.y = b.top + b.height / 2 - par;
+    });
+  }
+  remeasureCrosses();
+  addEventListener('resize', remeasureCrosses);
 
+  if (!reduced) {
     addEventListener('pointermove', function (e) {
       mouse.x = e.clientX;
       mouse.y = e.clientY;
-      document.body.classList.add('pointer');
-      trail.style.setProperty('--tx', e.clientX + 'px');
-      trail.style.setProperty('--ty', e.clientY + 'px');
     }, { passive: true });
+    addEventListener('pointerleave', function () { mouse.x = mouse.y = -9999; });
+  }
 
-    addEventListener('pointerleave', function () {
-      document.body.classList.remove('pointer');
-      mouse.x = mouse.y = -9999;
-    });
+  /* =======================================================================
+     3. LA BOUCLE — une seule pour toute la page
+     Un seul requestAnimationFrame partagé : deux boucles concurrentes se
+     marcheraient dessus et doubleraient les lectures de mise en page.
+     ======================================================================= */
+  var RADIUS = 170;
 
-    var trail = document.getElementById('trail');
-
-    // Les positions sont mesurées une fois puis réutilisées : les croix ne
-    // bougent que par translation, donc leur position de départ ne change pas.
-    var cache = crosses.map(function (el) {
-      return { el: el, x: 0, y: 0, lit: 0 };
-    });
-
-    function remeasure() {
-      cache.forEach(function (c) {
-        var b = c.el.getBoundingClientRect();
-        c.x = b.left + b.width / 2;
-        c.y = b.top + b.height / 2;
-      });
+  (function loop() {
+    if (smooth) {
+      // Interpolation exponentielle vers la position réelle. 0,12 donne un
+      // retard perceptible mais jamais mou ; au-delà de 0,2 l'adoucissement
+      // ne se voit plus, en dessous de 0,08 la page traîne.
+      smoothY += (scrollY - smoothY) * 0.12;
+      if (Math.abs(scrollY - smoothY) < 0.06) smoothY = scrollY;
+      scroller.style.transform = 'translate3d(0,' + (-smoothY).toFixed(2) + 'px,0)';
     }
-    remeasure();
-    addEventListener('resize', remeasure);
 
-    var par = 0, parTarget = 0;
+    // Les grilles défilent plus lentement que le contenu.
+    var ref = smooth ? smoothY : scrollY;
+    par = -ref * 0.16;
+    var p = par.toFixed(2) + 'px';
+    for (var j = 0; j < inners.length; j++) inners[j].style.setProperty('--par', p);
 
-    addEventListener('scroll', function () {
-      // Les grilles défilent plus lentement que la page : 18 % de l'écart.
-      parTarget = -scrollY * 0.18;
-    }, { passive: true });
-
-    (function loop() {
-      // Interpolation exponentielle : le parallaxe rattrape le défilement en
-      // douceur au lieu de lui coller image par image.
-      par += (parTarget - par) * 0.08;
-      var p = par.toFixed(2) + 'px';
-      containers[0].style.setProperty('--par', p);
-      containers[1].style.setProperty('--par', p);
-
+    if (!reduced) {
       for (var i = 0; i < cache.length; i++) {
         var c = cache[i];
         var dx = mouse.x - c.x;
-        // Les croix sont translatées par le parallaxe : leur position réelle à
-        // l'écran est leur position mesurée, décalée d'autant.
         var dy = mouse.y - (c.y + par);
         var d = Math.sqrt(dx * dx + dy * dy);
         var want = d < RADIUS ? (1 - d / RADIUS) : 0;
         // L'extinction est plus lente que l'allumage : la traînée lumineuse
         // vient de là, pas d'un effet séparé.
-        var k = want > c.lit ? 0.35 : 0.08;
-        c.lit += (want - c.lit) * k;
+        c.lit += (want - c.lit) * (want > c.lit ? 0.3 : 0.07);
         if (c.lit > 0.002 || want > 0) c.el.style.setProperty('--lit', c.lit.toFixed(3));
       }
-      requestAnimationFrame(loop);
-    })();
+    }
+
+    requestAnimationFrame(loop);
   })();
 
   /* =======================================================================
-     3. APPARITIONS — cascade au chargement, révélation au défilement
+     4. APPARITIONS
      ======================================================================= */
-  (function initReveal() {
+  (function reveal() {
     var items = [].slice.call(document.querySelectorAll('.rise'));
 
     if (reduced || !('IntersectionObserver' in window)) {
@@ -971,82 +853,19 @@ void main() {
         entry.target.classList.add('in');
         io.unobserve(entry.target);
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
 
-    // Une image d'attente avant d'observer : sans elle, le navigateur applique
-    // parfois l'état final avant d'avoir peint l'état initial, et la cascade
-    // ne se voit pas.
+    // Une image d'attente : sans elle, le navigateur applique parfois l'état
+    // final avant d'avoir peint l'état initial, et la cascade ne se voit pas.
     requestAnimationFrame(function () {
       items.forEach(function (el) { io.observe(el); });
     });
   })();
 
   /* =======================================================================
-     4. LES CARTES — lueur qui suit le curseur à l'intérieur
+     5. LE FORMULAIRE
      ======================================================================= */
-  (function initCards() {
-    if (reduced) return;
-    [].slice.call(document.querySelectorAll('.feature')).forEach(function (card) {
-      card.addEventListener('pointermove', function (e) {
-        var b = card.getBoundingClientRect();
-        card.style.setProperty('--mx', (e.clientX - b.left) + 'px');
-        card.style.setProperty('--my', (e.clientY - b.top) + 'px');
-      }, { passive: true });
-    });
-  })();
-
-  /* =======================================================================
-     5. LE BOUTON — aimantation et onde au clic
-     ======================================================================= */
-  (function initButton() {
-    var btn = document.getElementById('submitBtn');
-
-    if (!reduced) {
-      var PULL = 42;   // au-delà, le bouton ignore le curseur
-      var MAX  = 7;    // déplacement maximal, en pixels
-
-      addEventListener('pointermove', function (e) {
-        var b = btn.getBoundingClientRect();
-        var cx = b.left + b.width / 2;
-        var cy = b.top + b.height / 2;
-        var dx = e.clientX - cx;
-        var dy = e.clientY - cy;
-        // Le champ d'attraction épouse la forme du bouton : large et plat,
-        // comme lui. Un rayon circulaire donnerait une zone morte sur les côtés.
-        var nx = dx / (b.width / 2 + PULL);
-        var ny = dy / (b.height / 2 + PULL);
-        var d = Math.sqrt(nx * nx + ny * ny);
-
-        if (d < 1) {
-          btn.style.setProperty('--mxp', (nx * MAX).toFixed(2) + 'px');
-          btn.style.setProperty('--myp', (ny * MAX).toFixed(2) + 'px');
-          btn.style.setProperty('--sc', '1.015');
-        } else {
-          btn.style.setProperty('--mxp', '0px');
-          btn.style.setProperty('--myp', '0px');
-          btn.style.setProperty('--sc', '1');
-        }
-      }, { passive: true });
-    }
-
-    btn.addEventListener('pointerdown', function (e) {
-      if (reduced) return;
-      var b = btn.getBoundingClientRect();
-      var size = Math.max(b.width, b.height) * 2.2;
-      var el = document.createElement('span');
-      el.className = 'ripple';
-      el.style.width = el.style.height = size + 'px';
-      el.style.left = (e.clientX - b.left) + 'px';
-      el.style.top  = (e.clientY - b.top) + 'px';
-      btn.appendChild(el);
-      setTimeout(function () { el.remove(); }, 640);
-    });
-  })();
-
-  /* =======================================================================
-     6. LE FORMULAIRE
-     ======================================================================= */
-  (function initForm() {
+  (function form() {
     var form    = document.getElementById('waitlistForm');
     var email   = document.getElementById('emailInput');
     var phone   = document.getElementById('phoneInput');
@@ -1084,8 +903,8 @@ void main() {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) {
         return fail(email, 'That email address doesn’t look right.');
       }
-      // On compte les chiffres, pas les caractères : « +33 6 12 34 56 78 »
-      // est un numéro valide et ne doit pas être refusé pour ses espaces.
+      // On compte les chiffres, pas les caractères : « +33 6 12 34 56 78 » est
+      // valide et ne doit pas être refusé pour ses espaces.
       if ((tel.match(/\d/g) || []).length < 8) {
         return fail(phone, 'That phone number doesn’t look right.');
       }
@@ -1105,8 +924,8 @@ void main() {
         body: JSON.stringify({ email: mail, phone: tel })
       })
       .then(function (res) {
-        // 409 : adresse déjà inscrite. Du point de vue du visiteur ce n'est pas
-        // un échec — il est bien sur la liste, c'est tout ce qui l'intéresse.
+        // 409 : déjà inscrit. Du point de vue du visiteur ce n'est pas un
+        // échec — il est bien sur la liste, c'est tout ce qui l'intéresse.
         if (res.ok || res.status === 409) return done();
         return res.text().then(function (body) {
           throw new Error('HTTP ' + res.status + ' ' + body.slice(0, 160));
@@ -1122,14 +941,14 @@ void main() {
     });
 
     function done() {
-      form.style.transition = 'opacity .5s var(--ease), transform .5s var(--ease), filter .5s var(--ease)';
+      form.style.transition = 'opacity .55s var(--ease), transform .55s var(--ease), filter .55s var(--ease)';
       form.style.opacity = '0';
       form.style.transform = 'translateY(-12px)';
-      form.style.filter = 'blur(6px)';
+      form.style.filter = 'blur(7px)';
       setTimeout(function () {
         form.style.display = 'none';
         success.classList.add('show');
-      }, 460);
+      }, 500);
     }
   })();
 

@@ -1,14 +1,14 @@
 {
   "redirects": [
     {
-      "source": "/:path*",
+      "source": "/(.*)",
       "has": [
         {
           "type": "host",
           "value": "www.nokka.io"
         }
       ],
-      "destination": "https://nokka.io/:path*",
+      "destination": "https://nokka.io/$1",
       "permanent": true
     }
   ]

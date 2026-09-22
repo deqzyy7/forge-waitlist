@@ -312,6 +312,27 @@ body.no-gl .submit-btn {
   background: rgba(255, 255, 255, 0.12);
   border: 1px solid rgba(255, 255, 255, 0.28);
 }
+
+/* ÉCRAN TACTILE. iOS fait défiler le texte hors du fil JavaScript : un verre peint par WebGL, qu'il
+   faut replacer à chaque image en lisant la position du texte, ne peut que le suivre avec retard —
+   chaque carte « traînait » derrière son texte. Ici le verre est porté par l'élément lui-même : il
+   défile avec son texte, au pixel près. Le fond animé, lui, ne dépend pas du défilement et reste en
+   WebGL. */
+body.dom-glass .glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.04) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 18px 40px rgba(0, 0, 0, 0.35);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
+}
+body.dom-glass .submit-btn {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.10) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+/* Hauteur du plus grand viewport : quand la barre d'adresse se replie en défilant, le canvas ne
+   change plus de taille — pas de réallocation, pas d'éclair au milieu du geste. */
+body.dom-glass #gl { bottom: auto; height: 100lvh; }
 .submit-btn:disabled { opacity: 0.6; cursor: progress; }
 
 .form-note {
@@ -688,6 +709,8 @@ void main() {
   // peut écrire : on ne la remplace pas.
   var coarse  = matchMedia('(pointer: coarse)').matches;
   var smooth  = !reduced && !coarse;
+  var domGlass = coarse;                 // voir body.dom-glass dans le CSS
+  if (domGlass) document.body.classList.add('dom-glass');
 
   var MAX_PANELS = 6;
 
@@ -771,13 +794,18 @@ void main() {
     };
   })();
 
+  var lastW = 0;
   function resizeGL() {
     if (!gl) return;
+    // Sur mobile, un redimensionnement sans changement de largeur, c'est la barre d'adresse qui se
+    // replie : on garde le canvas tel quel (il est à la hauteur du plus grand viewport).
+    if (domGlass && innerWidth === lastW) return;
+    lastW = innerWidth;
     // Le fond est flou et le verre large : plafonner la densité à 1,5 ne se
     // voit pas, mais un GPU intégré, lui, sent la différence.
     dpr = Math.min(window.devicePixelRatio || 1, 1.5);
     canvas.width  = Math.floor(innerWidth  * dpr);
-    canvas.height = Math.floor(innerHeight * dpr);
+    canvas.height = Math.floor((domGlass ? canvas.clientHeight || innerHeight : innerHeight) * dpr);
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
   addEventListener('resize', resizeGL);
@@ -912,7 +940,7 @@ void main() {
 
     if (gl && !hidden) {
       var n = 0;
-      for (var k = 0; k < panels.length; k++) {
+      for (var k = 0; k < (domGlass ? 0 : panels.length); k++) {
         var pan = panels[k];
         var b = pan.el.getBoundingClientRect();
 

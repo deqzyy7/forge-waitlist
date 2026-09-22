@@ -869,18 +869,26 @@ void main() {
   var radBuf  = new Float32Array(MAX_PANELS);
   var litBuf  = new Float32Array(MAX_PANELS);
   var t0 = performance.now();
+  var lastT = t0;
   var hidden = false;
   document.addEventListener('visibilitychange', function () { hidden = document.hidden; });
 
   (function loop() {
     requestAnimationFrame(loop);
 
+    var now = performance.now();
+    var dt = Math.min(now - lastT, 100);          // plafonné : un onglet qui revient ne fait pas de saut
+    lastT = now;
+
     if (smooth) {
-      // Interpolation exponentielle vers la position réelle : 0,12 donne un
-      // retard perceptible sans jamais donner l'impression que la page traîne.
-      smoothY += (scrollY - smoothY) * 0.12;
+      // Interpolation exponentielle vers la position réelle, réglée en TEMPS et non par image : le
+      // même rendu à 60 Hz et à 120 Hz (ProMotion). 130 ms ≈ l'ancien 0,12 par image à 60 Hz.
+      smoothY += (scrollY - smoothY) * (1 - Math.exp(-dt / 130));
       if (Math.abs(scrollY - smoothY) < 0.06) smoothY = scrollY;
-      scroller.style.transform = 'translate3d(0,' + (-smoothY).toFixed(2) + 'px,0)';
+      // Calé sur la grille des pixels physiques : pas de texte qui scintille entre deux positions.
+      var pr = window.devicePixelRatio || 1;       // le vrai ratio de l'écran (dpr est plafonné pour WebGL)
+      var y = Math.round(smoothY * pr) / pr;
+      scroller.style.transform = 'translate3d(0,' + (-y).toFixed(3) + 'px,0)';
     }
 
     var ref = smooth ? smoothY : scrollY;
@@ -947,21 +955,22 @@ void main() {
   (function reveal() {
     var items = [].slice.call(document.querySelectorAll('.rise'));
 
-    if (reduced || !('IntersectionObserver' in window)) {
+    if (reduced) {
       items.forEach(function (el) { el.classList.add('in'); });
       return;
     }
 
-    var io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('in');
-        io.unobserve(entry.target);
-      });
-    }, { threshold: 0.1, rootMargin: '0px 0px -30px 0px' });
-
+    // Une seule cascade, au chargement, pour ce qui est à l'écran. Ce qui est plus bas est posé tout de
+    // suite, sans transition : au défilement, la page bouge d'un seul bloc — aucun élément ne glisse,
+    // ne se floute ni n'attend son tour pendant qu'on fait défiler.
     requestAnimationFrame(function () {
-      items.forEach(function (el) { io.observe(el); });
+      items.forEach(function (el) {
+        if (el.getBoundingClientRect().top < innerHeight) { el.classList.add('in'); return; }
+        el.style.transition = 'none';
+        el.classList.add('in');
+        void el.offsetHeight;                       // applique l'état final avant de rendre la transition
+        el.style.transition = '';
+      });
     });
   })();
 

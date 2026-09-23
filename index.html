@@ -205,9 +205,9 @@ body.native-scroll #spacer { display: none; }
 
 /* ------------------------------------------------------- capture du produit */
 
-/* Deux cadrages, pas une seule image redimensionnée : sur 375 px de large, la fenêtre
-   entière tombe à 0,3× et plus aucun texte n'est lisible. Le téléphone reçoit donc un
-   recadrage sur la colonne Aperçu (voir la source <picture>), l'ordinateur la fenêtre complète. */
+/* La fenêtre entière, à toutes les tailles. Sur téléphone elle sort des 24 px de marge
+   de la colonne pour prendre toute la largeur de l'écran : c'est la seule façon de la
+   montrer en entier sans la réduire davantage. */
 .shot { margin: 0 0 56px; }
 
 .shot-frame {
@@ -236,8 +236,11 @@ body.native-scroll #spacer { display: none; }
 }
 
 @media (max-width: 700px) {
-  .shot { margin-bottom: 44px; }
-  .shot img { aspect-ratio: 760 / 1328; }
+  /* -16 px annule une partie des 24 px de padding de la colonne : il reste 8 px de garde
+     de chaque côté, et l'image gagne 32 px de large, ce qui compte à cette taille. */
+  .shot { margin: 0 -16px 44px; }
+  .shot-frame { border-radius: 10px; }
+  .shot figcaption { padding: 0 16px; }
 }
 
 /* Sur grand écran la capture déborde la colonne de texte pour gagner en lisibilité,
@@ -464,11 +467,10 @@ body.dom-glass #gl { bottom: auto; height: 100lvh; }
 
     <figure class="shot rise" style="--i:3">
       <div class="shot-frame">
-        <picture>
-          <source media="(max-width: 700px)" srcset="app-mobile.webp" width="760" height="1328">
-          <img src="app-desk.webp" width="1200" height="776" decoding="async"
-               alt="L'interface de Nokka pendant un montage : les rushs à gauche, l'aperçu 9:16 avec ses sous-titres incrustés au centre, la timeline et les blocs de sous-titres en bas.">
-        </picture>
+        <img src="app-desk.webp" srcset="app-desk-sm.webp 760w, app-desk.webp 1200w"
+             sizes="(max-width: 700px) calc(100vw - 16px), 686px"
+             width="1200" height="776" decoding="async"
+             alt="L'interface de Nokka pendant un montage : les rushs à gauche, l'aperçu 9:16 avec ses sous-titres incrustés au centre, la timeline et les blocs de sous-titres en bas.">
       </div>
       <figcaption>Nokka pendant un montage automatique : la voix off, les plans et les sous-titres calés tout seuls.</figcaption>
     </figure>

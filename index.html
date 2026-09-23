@@ -203,6 +203,50 @@ body.native-scroll #spacer { display: none; }
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8), 0 1px 14px rgba(0, 0, 0, 0.55);
 }
 
+/* ------------------------------------------------------- capture du produit */
+
+/* Deux cadrages, pas une seule image redimensionnée : sur 375 px de large, la fenêtre
+   entière tombe à 0,3× et plus aucun texte n'est lisible. Le téléphone reçoit donc un
+   recadrage sur la colonne Aperçu (voir la source <picture>), l'ordinateur la fenêtre complète. */
+.shot { margin: 0 0 56px; }
+
+.shot-frame {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6);
+  background: #0A0A0C;
+}
+
+/* La hauteur est réservée avant le chargement : sans ça, l'image pousse la page vers
+   le bas au moment où elle arrive, et le scroll lissé saute. */
+.shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1200 / 776;
+}
+
+.shot figcaption {
+  margin-top: 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.46);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@media (max-width: 700px) {
+  .shot { margin-bottom: 44px; }
+  .shot img { aspect-ratio: 760 / 1328; }
+}
+
+/* Sur grand écran la capture déborde la colonne de texte pour gagner en lisibilité,
+   mais s'arrête PILE au bord intérieur des colonnes de croix (50 % ± 344 px) : au-delà
+   elle passerait par-dessus la grille. 552 px de contenu + 2 × 68 = 688 px. */
+@media (min-width: 1100px) {
+  .shot { margin-left: -68px; margin-right: -68px; }
+}
+
 /* --------------------------------------------------------------- le verre */
 
 /* Aucune de ces surfaces ne porte de fond ni de bordure : le shader les peint.
@@ -418,22 +462,33 @@ body.dom-glass #gl { bottom: auto; height: 100lvh; }
       </p>
     </div>
 
+    <figure class="shot rise" style="--i:3">
+      <div class="shot-frame">
+        <picture>
+          <source media="(max-width: 700px)" srcset="app-mobile.webp" width="760" height="1328">
+          <img src="app-desk.webp" width="1200" height="776" decoding="async"
+               alt="L'interface de Nokka pendant un montage : les rushs à gauche, l'aperçu 9:16 avec ses sous-titres incrustés au centre, la timeline et les blocs de sous-titres en bas.">
+        </picture>
+      </div>
+      <figcaption>Nokka pendant un montage automatique : la voix off, les plans et les sous-titres calés tout seuls.</figcaption>
+    </figure>
+
     <div class="features">
-      <div class="feature glass rise" style="--i:3" data-glass="20">
+      <div class="feature glass rise" style="--i:4" data-glass="20">
         <div class="feature-title">Créa strat</div>
         <div class="feature-desc">Faites-la vous-même, ou laissez Nokka la construire. À chaque brief, il analyse la psychologie d'achat de chaque marché où vous vendez, dans de grandes bases de données : avis Amazon, Reddit, forums. Il en tire les verbatims, les objections, les angles et les accroches, tous sourcés. La même créa strat pilote vos vidéos et vos statiques.</div>
       </div>
-      <div class="feature glass rise" style="--i:4" data-glass="20">
+      <div class="feature glass rise" style="--i:5" data-glass="20">
         <div class="feature-title">Montage automatique</div>
         <div class="feature-desc">Nokka analyse chacun de vos rushs, génère des voix off ultra réalistes et dynamiques, sans un silence, puis cale le montage dessus : coupes, transitions, SFX, sous-titres. Plus de 500 créas d'un coup, sans limite.</div>
       </div>
-      <div class="feature glass rise" style="--i:5" data-glass="20">
+      <div class="feature glass rise" style="--i:6" data-glass="20">
         <div class="feature-title">Créatives statiques</div>
         <div class="feature-desc">Nokka vous donne une base de créas concurrentes à copier directement, enrichie chaque semaine des statiques qui performent le mieux. Clonez-les ou partez de zéro : vous choisissez le modèle IA, votre créa strat guide chaque visuel.</div>
       </div>
     </div>
 
-    <form class="form-section glass rise" style="--i:6" id="waitlistForm" data-glass="24" novalidate>
+    <form class="form-section glass rise" style="--i:7" id="waitlistForm" data-glass="24" novalidate>
       <div class="form-title">Accès anticipé</div>
 
       <div class="form-group">
@@ -460,7 +515,7 @@ body.dom-glass #gl { bottom: auto; height: 100lvh; }
       Vous êtes sur la liste. Nous vous écrivons dès l’ouverture de votre accès.
     </div>
 
-    <div class="footer rise" style="--i:7">
+    <div class="footer rise" style="--i:8">
       Conçu pour les agences, les créateurs et les marques e-commerce.
     </div>
 

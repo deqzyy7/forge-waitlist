@@ -421,6 +421,15 @@ body.dom-glass #gl { bottom: auto; height: 100lvh; }
   font-size: 13px;
   color: var(--ink-3);
 }
+/* Le lien vers l'espace fermé : volontairement au même gris que le pied de
+   page, sans soulignement ni accent, pour qu'un visiteur le survole sans le
+   remarquer. Il se révèle un peu au survol, le temps de savoir qu'on clique. */
+.footer-link {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.3s var(--ease);
+}
+.footer-link:hover { color: var(--ink-2); }
 
 /* ----------------------------------------------------------- responsive */
 
@@ -519,6 +528,12 @@ body.dom-glass #gl { bottom: auto; height: 100lvh; }
 
     <div class="footer rise" style="--i:8">
       Conçu pour les agences, les créateurs et les marques e-commerce.
+      <!-- Le lien d'accès attend que app.nokka.io réponde : publier un lien mort
+           sur la seule page publique de la marque est pire que pas de lien du tout.
+           À rallumer dès que le sous-domaine est en ligne et que la porte répond.
+      <span aria-hidden="true">·</span>
+      <a class="footer-link" href="https://app.nokka.io" rel="nofollow noopener">Accès</a>
+      -->
     </div>
 
   </div>
